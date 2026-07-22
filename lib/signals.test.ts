@@ -87,7 +87,7 @@ describe("computeSignals", () => {
     expect(signals.some((signal) => signal.kind === "vacuum" && signal.traitId === "composure")).toBe(false);
   });
 
-  it("emits every qualifying pair at the inclusive 40-point polarity boundary", () => {
+  it("emits one polarity per trait at the inclusive 40-point boundary", () => {
     const members = [
       member("a", "Ada", { innovation: 40 }),
       member("b", "Ben", { innovation: 80 }),
@@ -97,12 +97,32 @@ describe("computeSignals", () => {
     const polarities = computeSignals(members).filter(
       (signal) => signal.kind === "polarity" && signal.traitId === "innovation",
     );
-    expect(polarities.map((signal) => signal.memberIds)).toEqual([
-      ["a", "b"],
-      ["a", "c"],
-    ]);
-    expect(polarities[0].narrative).toContain("Ada");
-    expect(polarities[0].narrative).toContain("Ben");
+    expect(polarities).toHaveLength(1);
+    expect(polarities[0].memberIds).toEqual(["b", "c", "a"]);
+  });
+
+  it("names both sides of a multi-member trait split in one finding", () => {
+    const members = [
+      member("a", "Ada", { conflict_approach: 20 }),
+      member("b", "Ben", { conflict_approach: 30 }),
+      member("c", "Cleo", { conflict_approach: 70 }),
+      member("d", "Dev", { conflict_approach: 90 }),
+    ];
+
+    const polarities = computeSignals(members).filter(
+      (signal) => signal.kind === "polarity" && signal.traitId === "conflict_approach",
+    );
+
+    expect(polarities).toHaveLength(1);
+    expect(polarities[0].memberIds).toEqual(["c", "d", "a", "b"]);
+    expect(polarities[0].narrative).toContain("Cleo and Dev");
+    expect(polarities[0].narrative).toContain("Ada and Ben");
+    expect(polarities[0].narrative).toContain(
+      TRAITS.find((trait) => trait.id === "conflict_approach")?.highDescriptor,
+    );
+    expect(polarities[0].narrative).toContain(
+      TRAITS.find((trait) => trait.id === "conflict_approach")?.lowDescriptor,
+    );
   });
 
   it("returns no signals for a balanced team", () => {

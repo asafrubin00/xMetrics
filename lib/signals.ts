@@ -57,31 +57,22 @@ export function computeSignals(members: TeamMember[]): DerivedSignal[] {
   });
 
   const polarities = TRAITS.flatMap((trait) => {
-    const signals: DerivedSignal[] = [];
+    const scores = members.map((member) => scoreFor(member, trait));
+    const minimum = Math.min(...scores);
+    const maximum = Math.max(...scores);
 
-    for (let firstIndex = 0; firstIndex < members.length; firstIndex += 1) {
-      for (let secondIndex = firstIndex + 1; secondIndex < members.length; secondIndex += 1) {
-        const first = members[firstIndex];
-        const second = members[secondIndex];
-        const gap = Math.abs(scoreFor(first, trait) - scoreFor(second, trait));
+    if (maximum - minimum < POLARITY_GAP) return [];
 
-        if (gap < POLARITY_GAP) continue;
+    const midpoint = (minimum + maximum) / 2;
+    const highGroup = members.filter((member) => scoreFor(member, trait) >= midpoint);
+    const lowGroup = members.filter((member) => scoreFor(member, trait) < midpoint);
 
-        const [lowerMember, higherMember] =
-          scoreFor(first, trait) <= scoreFor(second, trait)
-            ? [first, second]
-            : [second, first];
-
-        signals.push({
-          kind: "polarity",
-          traitId: trait.id,
-          memberIds: [first.id, second.id],
-          narrative: `${lowerMember.displayName}'s instinct is ${trait.lowDescriptor}; ${higherMember.displayName}'s is ${trait.highDescriptor}. Their opposing positions create a predictable point of friction.`,
-        });
-      }
-    }
-
-    return signals;
+    return [{
+      kind: "polarity" as const,
+      traitId: trait.id,
+      memberIds: [...highGroup, ...lowGroup].map((member) => member.id),
+      narrative: `${trait.name} divides the team. ${formatNames(highGroup)} lean to the high end (${trait.highDescriptor}); ${formatNames(lowGroup)} sit at the low end (${trait.lowDescriptor}). Expect a predictable fault line when a decision turns on this.`,
+    }];
   });
 
   return [...concentrations, ...vacuums, ...polarities];
