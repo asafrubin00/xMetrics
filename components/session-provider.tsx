@@ -3,11 +3,13 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { computeExposures, computeSignals } from "@/lib/signals";
 import { parseMembers, serialiseMembers, TEAM_STORAGE_KEY } from "@/lib/session-storage";
-import type { Session, TeamMember } from "@/lib/types";
+import type { Scenario, Session, TeamMember } from "@/lib/types";
 
 interface SessionContextValue {
   session: Session;
   setMembers: (members: TeamMember[]) => void;
+  setScenario: (scenario: Scenario | undefined) => void;
+  setChosenOptionId: (optionId: string | undefined) => void;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -20,6 +22,8 @@ export function SessionProvider({
   initialMembers?: TeamMember[];
 }>) {
   const [members, setMembersState] = useState<TeamMember[]>(initialMembers);
+  const [scenario, setScenario] = useState<Scenario>();
+  const [chosenOptionId, setChosenOptionId] = useState<string>();
   const [storageReady, setStorageReady] = useState(false);
 
   useEffect(() => {
@@ -44,10 +48,18 @@ export function SessionProvider({
         members,
         signals: computeSignals(members),
         exposures: computeExposures(members),
+        scenario,
+        chosenOptionId,
       },
-      setMembers: setMembersState,
+      setMembers: (nextMembers) => {
+        setMembersState(nextMembers);
+        setScenario(undefined);
+        setChosenOptionId(undefined);
+      },
+      setScenario,
+      setChosenOptionId,
     }),
-    [members],
+    [chosenOptionId, members, scenario],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
