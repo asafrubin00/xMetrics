@@ -35,7 +35,7 @@ export function computeSignals(members: TeamMember[]): DerivedSignal[] {
       kind: "concentration" as const,
       traitId: trait.id,
       memberIds: qualifyingMembers.map((member) => member.id),
-      narrative: `${formatNames(qualifyingMembers)} all tend to ${trait.highDescriptor}. Under pressure, their competing instincts may make shared ownership harder to establish.`,
+      narrative: `${formatNames(qualifyingMembers)} share the same strong tendency: ${trait.highDescriptor}. Under pressure, their competing instincts may make shared ownership harder to establish.`,
     }];
   });
 
@@ -52,7 +52,7 @@ export function computeSignals(members: TeamMember[]): DerivedSignal[] {
       kind: "vacuum" as const,
       traitId: trait.id,
       memberIds: [],
-      narrative: `${teamReference} naturally reaches the point where they ${trait.highDescriptor}; the collective tendency is instead to ${trait.lowDescriptor}. That gap may become consequential when the situation demands the opposite.`,
+      narrative: `${teamReference} naturally shows the high-end tendency — ${trait.highDescriptor}. The collective sits closer to the opposite pattern: ${trait.lowDescriptor}. That gap may become consequential when the situation demands otherwise.`,
     }];
   });
 
@@ -76,7 +76,7 @@ export function computeSignals(members: TeamMember[]): DerivedSignal[] {
           kind: "polarity",
           traitId: trait.id,
           memberIds: [first.id, second.id],
-          narrative: `${lowerMember.displayName} tends to ${trait.lowDescriptor}, while ${higherMember.displayName} is more likely to ${trait.highDescriptor}. Their opposing instincts create a predictable point of friction.`,
+          narrative: `${lowerMember.displayName}'s instinct is ${trait.lowDescriptor}; ${higherMember.displayName}'s is ${trait.highDescriptor}. Their opposing positions create a predictable point of friction.`,
         });
       }
     }
@@ -103,7 +103,7 @@ export function computeExposures(members: TeamMember[]): PressureExposure[] {
       memberId: member.id,
       traitId: mostExtreme.id,
       direction,
-      narrative: `When pressure peaks, ${member.displayName} is most likely to ${descriptor}.`,
+      narrative: `When pressure peaks, ${member.displayName}'s most pronounced response is ${descriptor}.`,
     };
   });
 }
