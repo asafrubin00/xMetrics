@@ -86,7 +86,8 @@ export default function ScenarioPage() {
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-7 sm:px-9 lg:px-14 lg:py-10">
-      <header className="flex items-center justify-between border-b border-navy-700/70 pb-5"><div><p className="font-display text-xl text-cream-50">xMetrics</p><p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-gold-400">Pressure scenario</p></div><p className="text-xs text-cream-300">{scenario.companyContext}</p></header>
+      <header className="border-b border-navy-700/70 pb-5"><div><p className="font-display text-xl text-cream-50">xMetrics</p><p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-gold-400">Pressure scenario</p></div></header>
+      <p className="mt-6 max-w-3xl text-sm leading-6 text-cream-300/80">{scenario.companyContext}</p>
 
       <section className="flex flex-1 flex-col justify-center py-12 lg:py-16">
         <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-gold-400"><span>Beat {beat.index} of 3</span><span className="h-px flex-1 bg-gold-500/20" /></div>
