@@ -1,17 +1,18 @@
-export interface SeatPosition {
-  x: number;
-  y: number;
+export interface SeatSlot {
+  left: number;
+  top: number;
+  labelAbove: boolean;
 }
 
 const SLOTS = {
-  TL: { x: 360, y: 100 },
-  TC: { x: 450, y: 100 },
-  TR: { x: 540, y: 100 },
-  L: { x: 210, y: 260 },
-  R: { x: 690, y: 260 },
-  BL: { x: 360, y: 420 },
-  BC: { x: 450, y: 420 },
-  BR: { x: 540, y: 420 },
+  TL: { left: 28, top: 9, labelAbove: false },
+  TC: { left: 50, top: 9, labelAbove: false },
+  TR: { left: 72, top: 9, labelAbove: false },
+  R: { left: 90, top: 50, labelAbove: false },
+  BR: { left: 72, top: 91, labelAbove: true },
+  BC: { left: 50, top: 91, labelAbove: true },
+  BL: { left: 28, top: 91, labelAbove: true },
+  L: { left: 10, top: 50, labelAbove: false },
 } as const;
 
 const ASSIGNMENTS = {
@@ -34,12 +35,12 @@ function supportedCount(count: number): asserts count is keyof typeof ASSIGNMENT
   }
 }
 
-export function seatSlots(count: number): SeatPosition[] {
+export function seatSlots(count: number): SeatSlot[] {
   supportedCount(count);
   return ASSIGNMENTS[count].map((slot) => ({ ...SLOTS[slot] }));
 }
 
-export function ghostSlot(count: number): SeatPosition {
+export function ghostSlot(count: number): SeatSlot {
   supportedCount(count);
   return { ...SLOTS[GHOST_ASSIGNMENTS[count]] };
 }

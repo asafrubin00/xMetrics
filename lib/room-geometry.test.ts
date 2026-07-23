@@ -1,42 +1,30 @@
 import { describe, expect, it } from "vitest";
 import { ghostSlot, seatSlots } from "./room-geometry";
 
-describe("room slot geometry", () => {
+describe("room percentage geometry", () => {
   for (const count of [3, 4, 5, 6]) {
-    it(`assigns ${count} separated slots inside the viewBox`, () => {
-      const positions = seatSlots(count);
+    it(`assigns ${count} unique slots within the square`, () => {
+      const slots = seatSlots(count);
 
-      expect(positions).toHaveLength(count);
-
-      for (const position of positions) {
-        expect(position.x).toBeGreaterThanOrEqual(34);
-        expect(position.x).toBeLessThanOrEqual(866);
-        expect(position.y).toBeGreaterThanOrEqual(34);
-        expect(position.y).toBeLessThanOrEqual(486);
+      expect(slots).toHaveLength(count);
+      expect(new Set(slots.map(({ left, top }) => `${left}-${top}`)).size).toBe(count);
+      for (const slot of slots) {
+        expect(slot.left).toBeGreaterThanOrEqual(0);
+        expect(slot.left).toBeLessThanOrEqual(100);
+        expect(slot.top).toBeGreaterThanOrEqual(0);
+        expect(slot.top).toBeLessThanOrEqual(100);
       }
-
-      for (let first = 0; first < positions.length; first += 1) {
-        for (let second = first + 1; second < positions.length; second += 1) {
-          const distance = Math.hypot(
-            positions[first].x - positions[second].x,
-            positions[first].y - positions[second].y,
-          );
-          expect(distance).toBeGreaterThanOrEqual(100);
-        }
-      }
-
-      const ghost = ghostSlot(count);
-      expect(positions).not.toContainEqual(ghost);
+      expect(slots).not.toContainEqual(ghostSlot(count));
     });
   }
 
-  it("uses the specified roster order and ghost slots", () => {
+  it("uses the specified roster order and bottom label placement", () => {
     expect(seatSlots(3)).toEqual([
-      { x: 450, y: 100 },
-      { x: 540, y: 420 },
-      { x: 360, y: 420 },
+      { left: 50, top: 9, labelAbove: false },
+      { left: 72, top: 91, labelAbove: true },
+      { left: 28, top: 91, labelAbove: true },
     ]);
-    expect(ghostSlot(6)).toEqual({ x: 450, y: 100 });
+    expect(ghostSlot(6)).toEqual({ left: 50, top: 9, labelAbove: false });
   });
 
   it("rejects unsupported seat counts", () => {
