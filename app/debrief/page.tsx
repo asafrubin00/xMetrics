@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Room, type RoomConnection } from "@/components/room";
 import { useSession } from "@/components/session-provider";
+import { findingLabel, mostNamedMember } from "@/lib/debrief-highlights";
 import {
   createDebriefStreamParser,
   type DebriefSections,
 } from "@/lib/debrief-stream";
 import { TRAITS } from "@/lib/traits.config";
-import type { Debrief } from "@/lib/types";
+import type { Debrief, DerivedSignal, TeamMember } from "@/lib/types";
 
 function findingsFromText(text: string): string[] {
   return text
@@ -44,7 +46,7 @@ function sectionsFromDebrief(debrief: Debrief | undefined): DebriefSections {
   };
 }
 
-function NarrativeSection({
+function DebriefCard({
   eyebrow,
   title,
   text,
@@ -54,12 +56,59 @@ function NarrativeSection({
   text: string;
 }) {
   return (
-    <section className="border-t border-navy-700/70 py-10 sm:py-14">
+    <section className="rounded-2xl border border-navy-700 bg-navy-900/60 p-6 sm:p-8">
       <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">{eyebrow}</p>
       <h2 className="mt-3 font-display text-3xl text-cream-50 sm:text-4xl">{title}</h2>
       <div className="mt-6 max-w-3xl whitespace-pre-line text-base leading-8 text-cream-100">{text}</div>
     </section>
   );
+}
+
+function roomConnections(
+  members: TeamMember[],
+  signals: DerivedSignal[],
+  debrief: Debrief | null,
+): RoomConnection[] {
+  const polarityConnections = signals
+    .filter((signal) => signal.kind === "polarity" && signal.memberIds.length >= 2)
+    .map((signal): RoomConnection | null => {
+      const involved = signal.memberIds
+        .map((id) => members.find((member) => member.id === id))
+        .filter((member) => member !== undefined)
+        .sort(
+          (first, second) =>
+            second.traits[signal.traitId] - first.traits[signal.traitId],
+        );
+      if (involved.length < 2) return null;
+      return {
+        fromId: involved[0].id,
+        toId: involved[involved.length - 1].id,
+        kind: "polarity",
+      };
+    })
+    .filter((connection) => connection !== null);
+
+  if (!debrief) return polarityConnections;
+  const centralMember = mostNamedMember(members, debrief);
+  const dependencyConnections = debrief.investorFindings.flatMap((finding) => {
+    if (!/(dependency|bottleneck)/i.test(finding)) return [];
+    const named = members.filter((member) =>
+      finding.toLowerCase().includes(member.displayName.toLowerCase()),
+    );
+    if (named.length < 2) return [];
+    const target = centralMember && named.some((member) => member.id === centralMember.id)
+      ? centralMember
+      : named[0];
+    return named
+      .filter((member) => member.id !== target.id)
+      .map((member): RoomConnection => ({
+        fromId: member.id,
+        toId: target.id,
+        kind: "dependency",
+      }));
+  });
+
+  return [...dependencyConnections, ...polarityConnections];
 }
 
 export default function DebriefPage() {
@@ -76,7 +125,16 @@ export default function DebriefPage() {
   const [status, setStatus] = useState<"loading" | "complete" | "error">(
     session.debrief ? "complete" : "loading",
   );
+  const [fullAnalysisOpen, setFullAnalysisOpen] = useState(false);
   const generationStarted = useRef(false);
+  const currentDebrief = session.debrief ?? completeDebrief(sections);
+  const centralMember = currentDebrief
+    ? mostNamedMember(session.members, currentDebrief)
+    : undefined;
+  const connections = useMemo(
+    () => roomConnections(session.members, session.signals, currentDebrief),
+    [currentDebrief, session.members, session.signals],
+  );
 
   const generateDebrief = useCallback(async () => {
     if (!session.scenario || !session.chosenOptionId) return;
@@ -166,6 +224,11 @@ export default function DebriefPage() {
   const chosenOption = session.scenario.options.find(
     (option) => option.id === session.chosenOptionId,
   );
+  const whatHappenedParagraphs = sections.whatHappened
+    ?.split(/\n\s*\n/)
+    .filter(Boolean) ?? [];
+  const findingCount = currentDebrief?.investorFindings.length ??
+    (sections.investorFindings ? findingsFromText(sections.investorFindings).length : 0);
 
   if (status === "error") {
     return (
@@ -184,7 +247,7 @@ export default function DebriefPage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-5xl px-5 py-8 sm:px-9 lg:px-14 lg:py-12">
+    <main className="mx-auto min-h-screen w-full max-w-6xl px-5 py-8 sm:px-9 lg:px-14 lg:py-12">
       <header className="border-b border-navy-700/70 pb-6">
         <p className="font-display text-xl text-cream-50">xMetrics</p>
         <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-gold-400">Investor debrief</p>
@@ -192,33 +255,73 @@ export default function DebriefPage() {
       <div className="py-10 sm:py-14">
         <p className="max-w-3xl text-sm leading-6 text-cream-300/80">{session.scenario.companyContext}</p>
         <h1 className="mt-7 font-display text-5xl leading-tight text-cream-50 sm:text-6xl">What this team revealed</h1>
-        <p className="mt-5 max-w-2xl text-sm leading-6 text-cream-300">Chosen course: <span className="text-cream-100">{chosenOption?.title}</span></p>
       </div>
 
-      {sections.whatHappened !== undefined && <NarrativeSection eyebrow="01 · Team dynamics" title="What happened here" text={sections.whatHappened} />}
-      {sections.choiceAnalysis !== undefined && <NarrativeSection eyebrow="02 · Execution" title="The choice they made" text={sections.choiceAnalysis} />}
+      <section aria-label="Debrief takeaways" className="grid overflow-hidden rounded-xl border border-navy-700 bg-navy-900 sm:grid-cols-3">
+        <div className="border-b border-navy-700 p-5 sm:border-b-0 sm:border-r">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-gold-400">Chosen course</p>
+          <p className="mt-2 font-display text-xl text-cream-50">{chosenOption?.title}</p>
+        </div>
+        <div className="border-b border-navy-700 p-5 sm:border-b-0 sm:border-r">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-gold-400">Investor findings</p>
+          <p className="mt-2 font-display text-xl text-cream-50">{findingCount || "—"}</p>
+        </div>
+        <div className="p-5">
+          <p className="text-[10px] uppercase tracking-[0.2em] text-gold-400">Most named</p>
+          <p className="mt-2 font-display text-xl text-cream-50">{centralMember?.displayName ?? "Analysis in progress"}</p>
+        </div>
+      </section>
+
+      <section className="py-10 sm:py-14">
+        <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">The room</p>
+        <div className="mx-auto max-w-4xl">
+          <Room members={session.members} connections={connections} />
+        </div>
+      </section>
+
+      <div className="space-y-5">
+      {sections.whatHappened !== undefined && (
+        <section className="rounded-2xl border border-navy-700 bg-navy-900/60 p-6 sm:p-8">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">01 · Team dynamics</p>
+          <h2 className="mt-3 font-display text-3xl text-cream-50 sm:text-4xl">What happened here</h2>
+          {whatHappenedParagraphs[0] && <p className="mt-6 max-w-3xl text-base leading-8 text-cream-100">{whatHappenedParagraphs[0]}</p>}
+          {fullAnalysisOpen && whatHappenedParagraphs.slice(1).map((paragraph, index) => (
+            <p key={index} className="mt-5 max-w-3xl text-base leading-8 text-cream-100">{paragraph}</p>
+          ))}
+          {whatHappenedParagraphs.length > 1 && (
+            <button type="button" aria-expanded={fullAnalysisOpen} onClick={() => setFullAnalysisOpen((open) => !open)} className="mt-6 text-xs font-semibold uppercase tracking-[0.16em] text-gold-400">
+              {fullAnalysisOpen ? "Show less" : "Read the full analysis"}
+            </button>
+          )}
+        </section>
+      )}
+      {sections.choiceAnalysis !== undefined && <DebriefCard eyebrow="02 · Execution" title="The choice they made" text={sections.choiceAnalysis} />}
       {sections.investorFindings !== undefined && (
-        <section className="border-t border-navy-700/70 py-10 sm:py-14">
+        <section className="rounded-2xl border border-navy-700 bg-navy-900/60 p-6 sm:p-8">
           <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">03 · Diligence</p>
           <h2 className="mt-3 font-display text-3xl text-cream-50 sm:text-4xl">Investor lens</h2>
           <ul className="mt-7 grid gap-4">
             {findingsFromText(sections.investorFindings).map((finding) => (
-              <li key={finding} className="border-l border-gold-500 bg-navy-900 px-5 py-4 text-sm leading-6 text-cream-100">{finding}</li>
+              <li key={finding} className="rounded-xl border border-navy-700 bg-navy-950/50 p-5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-400">{findingLabel(finding)}</p>
+                <p className="mt-3 text-sm leading-6 text-cream-100">{finding.replace(/\*\*/g, "")}</p>
+              </li>
             ))}
           </ul>
         </section>
       )}
-      {sections.whatWouldChange !== undefined && <NarrativeSection eyebrow="04 · Composition" title="What would change the picture" text={sections.whatWouldChange} />}
+      {sections.whatWouldChange !== undefined && <DebriefCard eyebrow="04 · Composition" title="What would change the picture" text={sections.whatWouldChange} />}
+      </div>
 
       {status === "loading" && (
-        <div className="border-t border-navy-700/70 py-10 text-center">
+        <div className="mt-5 rounded-2xl border border-navy-700/70 py-10 text-center">
           <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-gold-500" />
           <p className="mt-3 text-xs uppercase tracking-[0.2em] text-cream-300">Building the investor view</p>
         </div>
       )}
 
       {status === "complete" && (
-        <footer className="border-t border-navy-700/70 py-8">
+        <footer className="mt-8 border-t border-navy-700/70 py-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <button onClick={() => { clearGenerated(); router.push("/scenario"); }} className="rounded-lg bg-gold-500 px-5 py-3 text-sm font-semibold text-navy-950">Run a different scenario</button>
             <button onClick={() => router.push("/")} className="rounded-lg border border-navy-700 px-5 py-3 text-sm text-cream-100">Adjust the team</button>

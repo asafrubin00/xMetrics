@@ -125,10 +125,10 @@ export function Room({
       />
 
       <g aria-hidden="true">
-        {visibleConnections.map((connection) => {
+        {visibleConnections.map((connection, index) => {
           const from = memberPositions.get(connection.fromId)!;
           const to = memberPositions.get(connection.toId)!;
-          const key = `${connection.kind}-${connection.fromId}-${connection.toId}`;
+          const key = `${connection.kind}-${connection.fromId}-${connection.toId}-${index}`;
 
           if (connection.kind === "concentration") {
             return (
