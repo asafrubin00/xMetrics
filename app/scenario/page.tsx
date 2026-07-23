@@ -136,7 +136,7 @@ export default function ScenarioPage() {
 
       <div className="flex-1 py-7 sm:py-9">
         <section className="grid items-center gap-6 border-b border-navy-700/70 pb-7 lg:grid-cols-[minmax(0,40%)_minmax(0,60%)] lg:gap-10">
-          <div className="mx-auto w-full max-w-[560px]">
+          <div className="mx-auto w-full max-w-[620px]">
             <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">The room</p>
             <Room
               members={session.members}

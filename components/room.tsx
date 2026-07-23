@@ -63,7 +63,7 @@ function SeatLabel({
 }) {
   return (
     <span
-      className={`pointer-events-none absolute left-1/2 w-32 -translate-x-1/2 text-center ${labelAbove ? "bottom-[44px]" : "top-[44px]"}`}
+      className={`pointer-events-none absolute left-1/2 w-24 -translate-x-1/2 text-center sm:w-32 ${labelAbove ? "bottom-[44px]" : "top-[44px]"}`}
     >
       <span className={`hidden truncate text-sm sm:block ${highlighted ? "text-cream-50" : "text-cream-300"}`}>
         {member.displayName}
@@ -259,7 +259,7 @@ export function Room({
             className="absolute z-10 h-[68px] w-[68px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-cream-100/25 bg-navy-950 outline-none focus-visible:ring-4 focus-visible:ring-cream-50"
             style={{ left: `${slot.left}%`, top: `${slot.top}%` }}
           >
-            <span className={`pointer-events-none absolute left-1/2 w-32 -translate-x-1/2 text-center font-display text-xs italic text-cream-300/70 ${slot.labelAbove ? "bottom-[44px]" : "top-[44px]"}`}>
+            <span className={`pointer-events-none absolute left-1/2 w-24 -translate-x-1/2 text-center font-display text-xs italic text-cream-300/70 sm:w-32 ${slot.labelAbove ? "bottom-[44px]" : "top-[44px]"}`}>
               {ghostSeatLabel}
             </span>
           </div>

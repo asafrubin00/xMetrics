@@ -258,7 +258,7 @@ export default function DebriefPage() {
       <section className="grid items-center gap-7 border-b border-navy-700/70 pb-7 lg:grid-cols-[minmax(0,40%)_minmax(0,60%)] lg:gap-10">
         <div>
           <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">The room</p>
-          <div className="mx-auto w-full max-w-[560px]">
+          <div className="mx-auto w-full max-w-[620px]">
             <Room members={session.members} connections={connections} />
           </div>
         </div>
@@ -304,7 +304,7 @@ export default function DebriefPage() {
         <section className="rounded-2xl border border-navy-700 bg-navy-900/60 p-6 sm:p-8">
           <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">03 · Diligence</p>
           <h2 className="mt-3 font-display text-2xl text-cream-50 sm:text-3xl">Investor lens</h2>
-          <ul className="mt-7 grid gap-4 lg:grid-cols-2 min-[1600px]:grid-cols-3">
+          <ul className="mt-7 grid gap-4 lg:grid-cols-2 min-[1600px]:!grid-cols-3">
             {findingsFromText(sections.investorFindings).map((finding) => (
               <li key={finding} className="rounded-xl border border-navy-700 bg-navy-950/50 p-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-400">{findingLabel(finding)}</p>

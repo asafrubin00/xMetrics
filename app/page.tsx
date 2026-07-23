@@ -181,7 +181,7 @@ export default function TeamBuilder() {
 
         <section className="order-1 flex min-w-0 flex-col items-center justify-center border-b border-navy-700/70 px-5 py-7 sm:px-8 lg:order-2 lg:border-b-0 lg:px-7">
           <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">The room</p>
-          <div className="w-full max-w-[560px]">
+          <div className="w-full max-w-[620px]">
             <Room
               members={session.members}
               emptySeatCount={session.members.length < 3 ? 3 - session.members.length : session.members.length < 6 ? 1 : 0}

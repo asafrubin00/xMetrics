@@ -92,7 +92,7 @@ export default function TeamSignals() {
         <aside>
           <div className="lg:sticky lg:top-8">
             <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">The room</p>
-            <div className="mx-auto w-full max-w-[560px]">
+            <div className="mx-auto w-full max-w-[620px]">
               <Room
                 members={session.members}
                 highlightIds={activeSignal?.memberIds}
