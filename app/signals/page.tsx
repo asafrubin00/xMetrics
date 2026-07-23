@@ -78,8 +78,8 @@ export default function TeamSignals() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-7xl px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
-      <header className="flex flex-wrap items-end justify-between gap-5 border-b border-navy-700/70 pb-8">
+    <main className="mx-auto min-h-screen w-full max-w-7xl px-5 py-7 sm:px-8 lg:px-12 lg:py-9">
+      <header className="flex flex-wrap items-end justify-between gap-5 border-b border-navy-700/70 pb-6">
         <div>
           <Link href="/" className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">← Adjust team</Link>
           <h1 className="mt-4 font-display text-4xl text-cream-50 sm:text-5xl">Team signals</h1>
@@ -88,17 +88,19 @@ export default function TeamSignals() {
         <p className="text-sm text-cream-300">{session.members.length} people assessed</p>
       </header>
 
-      <div className="grid gap-10 py-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-14">
+      <div className="grid gap-8 py-7 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-12">
         <aside>
           <div className="lg:sticky lg:top-8">
             <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">The room</p>
-            <Room
-              members={session.members}
-              highlightIds={activeSignal?.memberIds}
-              dimUnhighlighted={Boolean(activeSignal && activeSignal.memberIds.length > 0)}
-              connections={activeConnections}
-              ghostSeatLabel={ghostSeatLabel}
-            />
+            <div className="mx-auto w-full max-w-[560px]">
+              <Room
+                members={session.members}
+                highlightIds={activeSignal?.memberIds}
+                dimUnhighlighted={Boolean(activeSignal && activeSignal.memberIds.length > 0)}
+                connections={activeConnections}
+                ghostSeatLabel={ghostSeatLabel}
+              />
+            </div>
 
             <div className="mt-5 border-t border-navy-700/70 pt-5">
               <button
@@ -205,7 +207,7 @@ export default function TeamSignals() {
             </div>
           )}
 
-          <section className="mt-10 border-t border-navy-700/70 pt-8">
+          <section className="mt-8 border-t border-navy-700/70 pt-6">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">Under pressure</p>
             <h2 className="mt-2 font-display text-2xl text-cream-50">Pressure profile</h2>
             <div className="mt-5 grid gap-3">
@@ -217,7 +219,7 @@ export default function TeamSignals() {
         </section>
       </div>
 
-      <footer className="flex flex-wrap items-center justify-between gap-5 border-t border-navy-700/70 py-8">
+      <footer className="flex flex-wrap items-center justify-between gap-5 border-t border-navy-700/70 py-6">
         <p className="max-w-xl text-xs leading-5 text-cream-300">These signals describe likely team dynamics, not individual capability or a validated assessment outcome.</p>
         <Link href="/scenario" className="rounded-lg bg-gold-500 px-6 py-3 text-sm font-semibold text-navy-950 hover:bg-gold-400">Run scenario</Link>
       </footer>
