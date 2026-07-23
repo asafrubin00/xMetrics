@@ -70,6 +70,8 @@ export default function TeamBuilder() {
   const { session, setMembers } = useSession();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showManualForm, setShowManualForm] = useState(false);
+  const [dragPayload, setDragPayload] = useState<string>();
+  const [removeDropActive, setRemoveDropActive] = useState(false);
   const memberCards = useRef(new Map<string, HTMLElement>());
   const selectedIds = useMemo(() => new Set(session.members.map((member) => member.id)), [session.members]);
   const editingMember = session.members.find((member) => member.id === editingId);
@@ -83,6 +85,35 @@ export default function TeamBuilder() {
   const selectMember = (memberId: string) => {
     setEditingId(memberId);
     setShowManualForm(false);
+    requestAnimationFrame(() => memberCards.current.get(memberId)?.focus());
+  };
+
+  const dropOnSeat = (slotIndex: number, payload: string) => {
+    const [kind, id] = payload.split(":");
+    if (kind === "persona") {
+      const persona = PERSONAS.find((candidate) => candidate.id === id);
+      if (!persona || selectedIds.has(persona.id)) return;
+      const next = [...session.members];
+      if (slotIndex < next.length) next[slotIndex] = persona;
+      else next.splice(Math.min(slotIndex, next.length), 0, persona);
+      setMembers(next.slice(0, 6));
+    }
+    if (kind === "member") {
+      const fromIndex = session.members.findIndex((member) => member.id === id);
+      if (fromIndex < 0 || slotIndex >= session.members.length || fromIndex === slotIndex) return;
+      const next = [...session.members];
+      [next[fromIndex], next[slotIndex]] = [next[slotIndex], next[fromIndex]];
+      setMembers(next);
+    }
+  };
+
+  const moveMember = (memberId: string, direction: -1 | 1) => {
+    const fromIndex = session.members.findIndex((member) => member.id === memberId);
+    const targetIndex = fromIndex + direction;
+    if (fromIndex < 0 || targetIndex < 0 || targetIndex >= session.members.length) return;
+    const next = [...session.members];
+    [next[fromIndex], next[targetIndex]] = [next[targetIndex], next[fromIndex]];
+    setMembers(next);
     requestAnimationFrame(() => memberCards.current.get(memberId)?.focus());
   };
 
@@ -111,6 +142,17 @@ export default function TeamBuilder() {
               {session.members.map((member) => (
                 <article
                   key={member.id}
+                  draggable
+                  onDragStart={(event) => {
+                    const payload = `member:${member.id}`;
+                    event.dataTransfer.setData("text/plain", payload);
+                    event.dataTransfer.effectAllowed = "move";
+                    setDragPayload(payload);
+                  }}
+                  onDragEnd={() => {
+                    setDragPayload(undefined);
+                    setRemoveDropActive(false);
+                  }}
                   ref={(node) => {
                     if (node) memberCards.current.set(member.id, node);
                     else memberCards.current.delete(member.id);
@@ -142,7 +184,12 @@ export default function TeamBuilder() {
           <div className="w-full max-w-[560px]">
             <Room
               members={session.members}
-              emptySeatCount={Math.max(0, 3 - session.members.length)}
+              emptySeatCount={session.members.length < 3 ? 3 - session.members.length : session.members.length < 6 ? 1 : 0}
+              interactive
+              dragPayload={dragPayload}
+              onDragStateChange={setDragPayload}
+              onSeatDrop={dropOnSeat}
+              onMoveMember={moveMember}
               onSeatClick={selectMember}
             />
           </div>
@@ -157,7 +204,32 @@ export default function TeamBuilder() {
           </div>
         </section>
 
-        <section className="order-3 min-w-0 border-t border-navy-700/70 px-5 py-7 sm:px-8 lg:max-h-[calc(100vh-81px)] lg:overflow-y-auto lg:border-l lg:border-t-0 lg:px-7">
+        <section
+          aria-label="Add people and remove members"
+          onDragOver={(event) => {
+            if (!dragPayload?.startsWith("member:")) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+            setRemoveDropActive(true);
+          }}
+          onDragLeave={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+              setRemoveDropActive(false);
+            }
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            const payload = event.dataTransfer.getData("text/plain");
+            if (payload.startsWith("member:")) {
+              const memberId = payload.slice("member:".length);
+              setMembers(session.members.filter((member) => member.id !== memberId));
+              setEditingId((current) => current === memberId ? null : current);
+            }
+            setDragPayload(undefined);
+            setRemoveDropActive(false);
+          }}
+          className={`order-3 min-w-0 border-t px-5 py-7 transition-colors motion-reduce:transition-none sm:px-8 lg:max-h-[calc(100vh-81px)] lg:overflow-y-auto lg:border-l lg:border-t-0 lg:px-7 ${removeDropActive ? "border-gold-500/70 bg-gold-500/5" : "border-navy-700/70"}`}
+        >
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">Add people</p>
@@ -180,9 +252,26 @@ export default function TeamBuilder() {
           ) : (
             <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-1 2xl:grid-cols-2">
               {PERSONAS.map((persona) => {
-                const disabled = selectedIds.has(persona.id) || session.members.length >= 6;
+                const selected = selectedIds.has(persona.id);
+                const roomFull = session.members.length >= 6;
                 return (
-                  <button key={persona.id} disabled={disabled} onClick={() => setMembers([...session.members, persona])} className="rounded-xl border border-navy-700 bg-navy-900 p-4 text-left transition hover:-translate-y-0.5 hover:border-gold-500/60 motion-reduce:transform-none disabled:cursor-not-allowed disabled:opacity-35">
+                  <button
+                    key={persona.id}
+                    disabled={selected}
+                    aria-disabled={selected || roomFull}
+                    draggable={!selected}
+                    onDragStart={(event) => {
+                      const payload = `persona:${persona.id}`;
+                      event.dataTransfer.setData("text/plain", payload);
+                      event.dataTransfer.effectAllowed = "move";
+                      setDragPayload(payload);
+                    }}
+                    onDragEnd={() => setDragPayload(undefined)}
+                    onClick={() => {
+                      if (!roomFull) setMembers([...session.members, persona]);
+                    }}
+                    className={`rounded-xl border border-navy-700 bg-navy-900 p-4 text-left transition hover:-translate-y-0.5 hover:border-gold-500/60 motion-reduce:transform-none disabled:cursor-not-allowed disabled:opacity-35 ${roomFull && !selected ? "opacity-65" : ""}`}
+                  >
                     <span className="block font-display text-base text-cream-50">{persona.displayName}</span>
                     <span className="mt-1 block text-xs text-cream-300">{persona.role}</span>
                   </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, type DragEvent } from "react";
 import { ghostSlot, seatSlots, type SeatSlot } from "@/lib/room-geometry";
 import type { TeamMember } from "@/lib/types";
 
@@ -17,6 +18,10 @@ export interface RoomProps {
   connections?: RoomConnection[];
   ghostSeatLabel?: string;
   interactive?: boolean;
+  dragPayload?: string;
+  onDragStateChange?: (payload?: string) => void;
+  onSeatDrop?: (slotIndex: number, payload: string) => void;
+  onMoveMember?: (memberId: string, direction: -1 | 1) => void;
   onSeatClick?: (memberId: string) => void;
 }
 
@@ -81,8 +86,13 @@ export function Room({
   connections = [],
   ghostSeatLabel,
   interactive = false,
+  dragPayload,
+  onDragStateChange,
+  onSeatDrop,
+  onMoveMember,
   onSeatClick,
 }: RoomProps) {
+  const [hoveredSlot, setHoveredSlot] = useState<number>();
   const emptySeats = Math.max(0, Math.min(emptySeatCount, 6 - members.length));
   const seatCount = Math.max(3, Math.min(6, members.length + emptySeats));
   const slots = seatSlots(seatCount);
@@ -99,6 +109,21 @@ export function Room({
     connection.toId,
   ]);
   const highlighted = new Set([...highlightIds, ...connectedIds]);
+  const dropHandlers = (slotIndex: number) => interactive ? {
+    onDragOver: (event: DragEvent) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      setHoveredSlot(slotIndex);
+    },
+    onDragLeave: () => setHoveredSlot((current) => current === slotIndex ? undefined : current),
+    onDrop: (event: DragEvent) => {
+      event.preventDefault();
+      const payload = event.dataTransfer.getData("text/plain");
+      setHoveredSlot(undefined);
+      if (payload) onSeatDrop?.(slotIndex, payload);
+      onDragStateChange?.(undefined);
+    },
+  } : {};
 
   return (
     <div
@@ -180,8 +205,27 @@ export function Room({
             key={member.id}
             type="button"
             aria-label={`${member.displayName}, ${member.role}`}
+            aria-keyshortcuts={interactive ? "Alt+ArrowLeft Alt+ArrowRight" : undefined}
+            draggable={interactive}
+            onDragStart={interactive ? (event) => {
+              const payload = `member:${member.id}`;
+              event.dataTransfer.setData("text/plain", payload);
+              event.dataTransfer.effectAllowed = "move";
+              onDragStateChange?.(payload);
+            } : undefined}
+            onDragEnd={interactive ? () => {
+              setHoveredSlot(undefined);
+              onDragStateChange?.(undefined);
+            } : undefined}
+            onKeyDown={interactive ? (event) => {
+              if (event.altKey && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
+                event.preventDefault();
+                onMoveMember?.(member.id, event.key === "ArrowLeft" ? -1 : 1);
+              }
+            } : undefined}
             onClick={() => onSeatClick?.(member.id)}
-            className={`group absolute z-10 h-[68px] w-[68px] -translate-x-1/2 -translate-y-1/2 rounded-full border bg-navy-900 font-display text-xl text-cream-50 outline-none transition-[opacity,box-shadow,border-width] duration-300 focus-visible:ring-4 focus-visible:ring-cream-50 motion-reduce:transition-none ${interactive || onSeatClick ? "cursor-pointer" : "cursor-default"} ${isHighlighted ? "border-[3px] border-gold-500 shadow-[0_0_20px_rgba(201,162,39,0.28)]" : "border-[1.5px] border-gold-500"} ${isDimmed ? "opacity-35" : "opacity-100"}`}
+            {...dropHandlers(index)}
+            className={`group absolute z-10 h-[68px] w-[68px] -translate-x-1/2 -translate-y-1/2 rounded-full border bg-navy-900 font-display text-xl text-cream-50 outline-none transition-[opacity,box-shadow,border-width] duration-300 focus-visible:ring-4 focus-visible:ring-cream-50 motion-reduce:transition-none ${interactive || onSeatClick ? "cursor-pointer" : "cursor-default"} ${isHighlighted || hoveredSlot === index ? "border-[3px] border-gold-500 shadow-[0_0_20px_rgba(201,162,39,0.28)]" : "border-[1.5px] border-gold-500"} ${isDimmed || (dragPayload === `member:${member.id}` && hoveredSlot !== index) ? "opacity-35" : "opacity-100"}`}
             style={{ left: `${slot.left}%`, top: `${slot.top}%` }}
           >
             {initials(member.displayName)}
@@ -195,10 +239,11 @@ export function Room({
         return (
           <div
             key={`empty-${offset}`}
-            role="img"
+            role={interactive ? "button" : "img"}
             tabIndex={0}
             aria-label="Empty seat"
-            className="absolute z-10 h-[68px] w-[68px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-cream-100/30 outline-none focus-visible:ring-4 focus-visible:ring-cream-50"
+            {...dropHandlers(members.length + offset)}
+            className={`absolute z-10 h-[68px] w-[68px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed outline-none transition-[opacity,box-shadow,border-color] focus-visible:ring-4 focus-visible:ring-cream-50 motion-reduce:transition-none ${hoveredSlot === members.length + offset ? "border-gold-500 shadow-[0_0_20px_rgba(201,162,39,0.28)]" : "border-cream-100/30"} ${dragPayload?.startsWith("member:") ? "opacity-45" : "opacity-100"}`}
             style={{ left: `${slot.left}%`, top: `${slot.top}%` }}
           />
         );
