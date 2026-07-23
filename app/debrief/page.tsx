@@ -127,7 +127,9 @@ export default function DebriefPage() {
   );
   const [fullAnalysisOpen, setFullAnalysisOpen] = useState(false);
   const generationStarted = useRef(false);
-  const currentDebrief = session.debrief ?? completeDebrief(sections);
+  const currentDebrief = status === "complete"
+    ? session.debrief ?? completeDebrief(sections)
+    : null;
   const centralMember = currentDebrief
     ? mostNamedMember(session.members, currentDebrief)
     : undefined;
@@ -227,8 +229,7 @@ export default function DebriefPage() {
   const whatHappenedParagraphs = sections.whatHappened
     ?.split(/\n\s*\n/)
     .filter(Boolean) ?? [];
-  const findingCount = currentDebrief?.investorFindings.length ??
-    (sections.investorFindings ? findingsFromText(sections.investorFindings).length : 0);
+  const findingCount = currentDebrief?.investorFindings.length;
 
   if (status === "error") {
     return (
@@ -247,39 +248,40 @@ export default function DebriefPage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-6xl px-5 py-8 sm:px-9 lg:px-14 lg:py-12">
-      <header className="border-b border-navy-700/70 pb-6">
+    <main className="mx-auto min-h-screen w-full max-w-7xl px-5 py-7 sm:px-9 lg:px-12 lg:py-9">
+      <header className="border-b border-navy-700/70 pb-5">
         <p className="font-display text-xl text-cream-50">xMetrics</p>
         <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-gold-400">Investor debrief</p>
       </header>
-      <div className="py-10 sm:py-14">
-        <p className="max-w-3xl text-sm leading-6 text-cream-300/80">{session.scenario.companyContext}</p>
-        <h1 className="mt-7 font-display text-5xl leading-tight text-cream-50 sm:text-6xl">What this team revealed</h1>
-      </div>
+      <h1 className="py-6 font-display text-4xl leading-tight text-cream-50 sm:text-5xl">What this team revealed</h1>
 
-      <section aria-label="Debrief takeaways" className="grid overflow-hidden rounded-xl border border-navy-700 bg-navy-900 sm:grid-cols-3">
-        <div className="border-b border-navy-700 p-5 sm:border-b-0 sm:border-r">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-gold-400">Chosen course</p>
-          <p className="mt-2 font-display text-xl text-cream-50">{chosenOption?.title}</p>
+      <section className="grid items-center gap-7 border-b border-navy-700/70 pb-7 lg:grid-cols-[minmax(0,40%)_minmax(0,60%)] lg:gap-10">
+        <div>
+          <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">The room</p>
+          <div className="mx-auto w-full max-w-[560px]">
+            <Room members={session.members} connections={connections} />
+          </div>
         </div>
-        <div className="border-b border-navy-700 p-5 sm:border-b-0 sm:border-r">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-gold-400">Investor findings</p>
-          <p className="mt-2 font-display text-xl text-cream-50">{findingCount || "—"}</p>
-        </div>
-        <div className="p-5">
-          <p className="text-[10px] uppercase tracking-[0.2em] text-gold-400">Most named</p>
-          <p className="mt-2 font-display text-xl text-cream-50">{centralMember?.displayName ?? "Analysis in progress"}</p>
+        <div className="min-w-0">
+          <p className="max-w-3xl text-sm leading-6 text-cream-300/80">{session.scenario.companyContext}</p>
+          <div aria-label="Debrief takeaways" className="mt-5 overflow-hidden rounded-xl border border-navy-700 bg-navy-900">
+            <div className="border-b border-navy-700 p-4">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-gold-400">Chosen course</p>
+              <p className="mt-1 font-display text-lg text-cream-50">{chosenOption?.title}</p>
+            </div>
+            <div className="border-b border-navy-700 p-4">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-gold-400">Investor findings</p>
+              <p className="mt-1 font-display text-lg text-cream-50">{findingCount ?? "Analysis in progress"}</p>
+            </div>
+            <div className="p-4">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-gold-400">Most named</p>
+              <p className="mt-1 font-display text-lg text-cream-50">{centralMember?.displayName ?? "Analysis in progress"}</p>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="py-10 sm:py-14">
-        <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">The room</p>
-        <div className="mx-auto max-w-4xl">
-          <Room members={session.members} connections={connections} />
-        </div>
-      </section>
-
-      <div className="space-y-5">
+      <div className="mt-6 space-y-5">
       {sections.whatHappened !== undefined && (
         <section className="rounded-2xl border border-navy-700 bg-navy-900/60 p-6 sm:p-8">
           <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">01 · Team dynamics</p>
@@ -300,7 +302,7 @@ export default function DebriefPage() {
         <section className="rounded-2xl border border-navy-700 bg-navy-900/60 p-6 sm:p-8">
           <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">03 · Diligence</p>
           <h2 className="mt-3 font-display text-3xl text-cream-50 sm:text-4xl">Investor lens</h2>
-          <ul className="mt-7 grid gap-4">
+          <ul className="mt-7 grid gap-4 md:grid-cols-2">
             {findingsFromText(sections.investorFindings).map((finding) => (
               <li key={finding} className="rounded-xl border border-navy-700 bg-navy-950/50 p-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-400">{findingLabel(finding)}</p>
