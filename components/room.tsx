@@ -1,6 +1,6 @@
 "use client";
 
-import { seatPositions, type SeatPosition } from "@/lib/room-geometry";
+import { ghostSlot, seatSlots, type SeatPosition } from "@/lib/room-geometry";
 import type { TeamMember } from "@/lib/types";
 
 export interface RoomConnection {
@@ -32,15 +32,6 @@ function firstName(displayName: string): string {
   return displayName.trim().split(/\s+/)[0] ?? displayName;
 }
 
-function ghostPosition(memberCount: number): SeatPosition {
-  const angle = -90 + 180 / Math.max(3, memberCount);
-  const radians = angle * (Math.PI / 180);
-  return {
-    x: 450 + 322 * Math.cos(radians),
-    y: 280 + 196 * Math.sin(radians),
-  };
-}
-
 function concentrationPath(from: SeatPosition, to: SeatPosition): string {
   const midpointX = (from.x + to.x) / 2;
   const midpointY = (from.y + to.y) / 2;
@@ -60,7 +51,7 @@ export function Room({
 }: RoomProps) {
   const emptySeats = Math.max(0, Math.min(emptySeatCount, 6 - members.length));
   const seatCount = Math.max(3, Math.min(6, members.length + emptySeats));
-  const positions = seatPositions(seatCount);
+  const positions = seatSlots(seatCount);
   const memberPositions = new Map(
     members.map((member, index) => [member.id, positions[index]]),
   );
@@ -77,7 +68,7 @@ export function Room({
 
   return (
     <svg
-      viewBox="0 0 900 560"
+      viewBox="0 0 900 520"
       role="img"
       aria-label={`Team room with ${members.length} filled ${members.length === 1 ? "seat" : "seats"}`}
       className="h-auto w-full overflow-visible"
@@ -105,23 +96,16 @@ export function Room({
         </marker>
       </defs>
 
-      <ellipse
-        cx="450"
-        cy="280"
-        rx="210"
-        ry="112"
+      <rect
+        x="290"
+        y="170"
+        width="320"
+        height="180"
+        rx="14"
         fill="#101F35"
-        stroke="#233B5C"
-        strokeWidth="2"
-      />
-      <ellipse
-        cx="450"
-        cy="280"
-        rx="174"
-        ry="80"
-        fill="none"
-        stroke="#C9A227"
-        strokeOpacity="0.12"
+        stroke="#F3EDE0"
+        strokeOpacity="0.15"
+        strokeWidth="1"
       />
 
       <g aria-hidden="true">
@@ -182,7 +166,7 @@ export function Room({
             style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
           >
             <circle
-              r="38"
+              r="34"
               fill="#101F35"
               stroke="#C9A227"
               strokeWidth={isHighlighted ? 4 : 1.5}
@@ -245,7 +229,7 @@ export function Room({
             style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
           >
             <circle
-              r="38"
+              r="34"
               fill="none"
               stroke="#F3EDE0"
               strokeOpacity="0.3"
@@ -258,7 +242,7 @@ export function Room({
       })}
 
       {ghostSeatLabel && members.length >= 3 && (() => {
-        const position = ghostPosition(members.length);
+        const position = ghostSlot(members.length);
         return (
           <g
             role="img"
@@ -268,7 +252,7 @@ export function Room({
             style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
           >
             <circle
-              r="38"
+              r="34"
               fill="#0A1628"
               stroke="#F3EDE0"
               strokeOpacity="0.25"
