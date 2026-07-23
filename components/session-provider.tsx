@@ -3,13 +3,16 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { computeExposures, computeSignals } from "@/lib/signals";
 import { parseMembers, serialiseMembers, TEAM_STORAGE_KEY } from "@/lib/session-storage";
-import type { Scenario, Session, TeamMember } from "@/lib/types";
+import type { Debrief, Scenario, Session, TeamMember } from "@/lib/types";
 
 interface SessionContextValue {
   session: Session;
   setMembers: (members: TeamMember[]) => void;
   setScenario: (scenario: Scenario | undefined) => void;
   setChosenOptionId: (optionId: string | undefined) => void;
+  setDebrief: (debrief: Debrief | undefined) => void;
+  clearGenerated: () => void;
+  startOver: () => void;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -24,6 +27,7 @@ export function SessionProvider({
   const [members, setMembersState] = useState<TeamMember[]>(initialMembers);
   const [scenario, setScenario] = useState<Scenario>();
   const [chosenOptionId, setChosenOptionId] = useState<string>();
+  const [debrief, setDebrief] = useState<Debrief>();
   const [storageReady, setStorageReady] = useState(false);
 
   useEffect(() => {
@@ -39,7 +43,11 @@ export function SessionProvider({
 
   useEffect(() => {
     if (!storageReady) return;
-    window.localStorage.setItem(TEAM_STORAGE_KEY, serialiseMembers(members));
+    if (members.length === 0) {
+      window.localStorage.removeItem(TEAM_STORAGE_KEY);
+    } else {
+      window.localStorage.setItem(TEAM_STORAGE_KEY, serialiseMembers(members));
+    }
   }, [members, storageReady]);
 
   const value = useMemo<SessionContextValue>(
@@ -50,16 +58,31 @@ export function SessionProvider({
         exposures: computeExposures(members),
         scenario,
         chosenOptionId,
+        debrief,
       },
       setMembers: (nextMembers) => {
         setMembersState(nextMembers);
         setScenario(undefined);
         setChosenOptionId(undefined);
+        setDebrief(undefined);
       },
       setScenario,
       setChosenOptionId,
+      setDebrief,
+      clearGenerated: () => {
+        setScenario(undefined);
+        setChosenOptionId(undefined);
+        setDebrief(undefined);
+      },
+      startOver: () => {
+        window.localStorage.removeItem(TEAM_STORAGE_KEY);
+        setMembersState([]);
+        setScenario(undefined);
+        setChosenOptionId(undefined);
+        setDebrief(undefined);
+      },
     }),
-    [chosenOptionId, members, scenario],
+    [chosenOptionId, debrief, members, scenario],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
