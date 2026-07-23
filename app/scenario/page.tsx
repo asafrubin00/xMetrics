@@ -54,7 +54,7 @@ function MomentCard({
       onMouseLeave={() => onInteraction(false)}
       onFocus={() => onInteraction(true)}
       onBlur={() => onInteraction(false)}
-      className="border-l border-gold-500 bg-navy-900 px-5 py-4 outline-none transition-colors focus-visible:bg-navy-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-400"
+      className="h-full border-l border-gold-500 bg-navy-900 px-5 py-4 outline-none transition-colors focus-visible:bg-navy-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-400"
     >
       <p className="text-sm leading-6 text-cream-100">{moment}</p>
       <footer className="mt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-400">{memberName} · {role}</footer>
@@ -131,12 +131,12 @@ export default function ScenarioPage() {
   const highlightedMemberId = interactionMemberId ?? visibleMemberId;
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-7 sm:px-9 lg:px-14 lg:py-10">
+    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-5 py-7 sm:px-9 lg:px-12 lg:py-9">
       <header className="border-b border-navy-700/70 pb-5"><div><p className="font-display text-xl text-cream-50">xMetrics</p><p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-gold-400">Pressure scenario</p></div></header>
 
-      <div className="grid flex-1 gap-8 py-10 lg:grid-cols-[minmax(330px,0.78fr)_minmax(0,1.22fr)] lg:gap-12">
-        <aside>
-          <div className="lg:sticky lg:top-8">
+      <div className="flex-1 py-7 sm:py-9">
+        <section className="grid items-center gap-6 border-b border-navy-700/70 pb-7 lg:grid-cols-[minmax(0,40%)_minmax(0,60%)] lg:gap-10">
+          <div className="mx-auto w-full max-w-[560px]">
             <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">The room</p>
             <Room
               members={session.members}
@@ -144,17 +144,15 @@ export default function ScenarioPage() {
               dimUnhighlighted={Boolean(highlightedMemberId)}
             />
           </div>
-        </aside>
-
-        <section className="min-w-0">
+          <div className="min-w-0">
           <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-gold-400">
             <span>Beat {beat.index} of 3</span>
             <span className="h-px flex-1 bg-gold-500/20" />
           </div>
-          <h1 className="mt-6 font-display text-4xl leading-tight text-cream-50 sm:text-5xl">{beat.title}</h1>
+          <h1 className="mt-5 font-display text-4xl leading-tight text-cream-50 sm:text-5xl">{beat.title}</h1>
 
           {beatIndex === 0 ? (
-            <p className="mt-6 max-w-[68ch] text-sm leading-6 text-cream-300/80">{scenario.companyContext}</p>
+            <p className="mt-5 max-w-[68ch] text-sm leading-6 text-cream-300/80">{scenario.companyContext}</p>
           ) : (
             <div className="mt-5">
               <button
@@ -168,15 +166,17 @@ export default function ScenarioPage() {
               {contextOpen && <p className="mt-4 max-w-[68ch] text-sm leading-6 text-cream-300/80">{scenario.companyContext}</p>}
             </div>
           )}
+          </div>
+        </section>
 
-          <div className="mt-8 grid gap-7 xl:grid-cols-[minmax(0,68ch)_minmax(230px,0.65fr)]">
-            <div className="space-y-5">
+        <section className="pt-7">
+          <div className="min-[1281px]:columns-2 min-[1281px]:gap-12">
               {beat.body.split(/\n\s*\n/).filter(Boolean).map((paragraph, index) => (
-                <p key={index} className="max-w-[68ch] text-base leading-8 text-cream-100">{paragraph}</p>
+              <p key={index} className="mb-5 max-w-[78ch] break-inside-avoid text-base leading-8 text-cream-100">{paragraph}</p>
               ))}
-            </div>
-            {beat.memberMoments.length > 0 && (
-              <div className="space-y-4">
+          </div>
+          {beat.memberMoments.length > 0 && (
+            <div className={`mt-6 grid auto-rows-fr gap-4 ${beat.memberMoments.length <= 4 ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
                 {beat.memberMoments.map((memberMoment, index) => {
                   const member = session.members.find((candidate) => candidate.id === memberMoment.memberId);
                   return (
@@ -190,12 +190,11 @@ export default function ScenarioPage() {
                     />
                   );
                 })}
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
           {beatIndex < 2 ? (
-            <div className="mt-10 flex justify-end">
+            <div className="mt-7 flex justify-end">
               <button
                 onClick={() => {
                   setBeatIndex((current) => current + 1);
@@ -209,18 +208,18 @@ export default function ScenarioPage() {
               </button>
             </div>
           ) : (
-            <div className="mt-12">
+            <section className="mt-8 border-t border-navy-700/70 pt-7">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">The decision</p>
               <h2 className="mt-2 font-display text-3xl text-cream-50">Choose the course this team takes</h2>
-              <div className="mt-6 grid gap-4 lg:grid-cols-3">
+              <div className="mt-5 grid auto-rows-fr gap-4 lg:grid-cols-3">
                 {scenario.options.map((option) => (
-                  <button key={option.id} onClick={() => { setChosenOptionId(option.id); router.push("/debrief"); }} className="group rounded-xl border border-navy-700 bg-navy-900 p-6 text-left transition hover:-translate-y-0.5 hover:border-gold-500/70">
+                  <button key={option.id} onClick={() => { setChosenOptionId(option.id); router.push("/debrief"); }} className="group h-full rounded-xl border border-navy-700 bg-navy-900 p-6 text-left transition hover:-translate-y-0.5 hover:border-gold-500/70 motion-reduce:transform-none">
                     <span className="font-display text-xl text-cream-50 group-hover:text-gold-400">{option.title}</span>
                     <span className="mt-3 block text-sm leading-6 text-cream-300">{option.description}</span>
                   </button>
                 ))}
               </div>
-            </div>
+            </section>
           )}
         </section>
       </div>
