@@ -4,6 +4,8 @@ import { SCENARIO_SYSTEM_PROMPT } from "@/lib/scenario-prompt";
 import type { DerivedSignal, PressureExposure, TeamMember } from "@/lib/types";
 import type { TraitDefinition } from "@/lib/traits.config";
 
+export const maxDuration = 300;
+
 interface ScenarioRequestBody {
   members: TeamMember[];
   signals: DerivedSignal[];
@@ -25,13 +27,6 @@ function isScenarioRequestBody(value: unknown): value is ScenarioRequestBody {
     Array.isArray(candidate.signals) &&
     Array.isArray(candidate.exposures) &&
     Array.isArray(candidate.traitDefinitions);
-}
-
-function responseText(message: Anthropic.Message): string {
-  return message.content
-    .filter((block): block is Anthropic.TextBlock => block.type === "text")
-    .map((block) => block.text)
-    .join("");
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -56,16 +51,20 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const message = await client.messages.create(
+      let rawResponseText = "";
+      const stream = client.messages.stream(
         {
           model: "claude-sonnet-4-6",
-          max_tokens: 12_000,
+          max_tokens: 6_000,
           system: SCENARIO_SYSTEM_PROMPT,
           messages: [{ role: "user", content: userPrompt }],
         },
-        { signal: AbortSignal.timeout(60_000) },
+        { signal: AbortSignal.timeout(180_000) },
       );
-      const rawResponseText = responseText(message);
+      stream.on("text", (textDelta) => {
+        rawResponseText += textDelta;
+      });
+      const message = await stream.finalMessage();
       const scenario = parseScenarioResponse(rawResponseText, memberIds);
       if (scenario) return Response.json(scenario);
       console.error("Scenario response failed validation", {

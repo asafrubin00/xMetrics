@@ -2,11 +2,11 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { createMessage } = vi.hoisted(() => ({ createMessage: vi.fn() }));
+const { streamMessage } = vi.hoisted(() => ({ streamMessage: vi.fn() }));
 
 vi.mock("@anthropic-ai/sdk", () => ({
   default: class MockAnthropic {
-    messages = { create: createMessage };
+    messages = { stream: streamMessage };
   },
 }));
 
@@ -38,16 +38,29 @@ const requestBody = {
 };
 
 afterEach(() => {
-  createMessage.mockReset();
+  streamMessage.mockReset();
+  vi.restoreAllMocks();
   vi.unstubAllEnvs();
 });
 
 describe("POST /api/scenario", () => {
   it("retries once after invalid model output and returns the validated scenario", async () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "test-key");
-    createMessage
-      .mockResolvedValueOnce({ content: [{ type: "text", text: "not json" }] })
-      .mockResolvedValueOnce({ content: [{ type: "text", text: JSON.stringify(scenario) }] });
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    const streamResult = (text: string) => {
+      const result = {
+        on: vi.fn((_event: string, listener: (delta: string) => void) => {
+          listener(text);
+          return result;
+        }),
+        finalMessage: vi.fn().mockResolvedValue({ stop_reason: "end_turn" }),
+      };
+      return result;
+    };
+    streamMessage
+      .mockReturnValueOnce(streamResult("not json"))
+      .mockReturnValueOnce(streamResult(JSON.stringify(scenario)));
 
     const response = await POST(new Request("http://localhost/api/scenario", {
       method: "POST",
@@ -57,9 +70,9 @@ describe("POST /api/scenario", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(scenario);
-    expect(createMessage).toHaveBeenCalledTimes(2);
-    expect(createMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ model: "claude-sonnet-4-6" }),
+    expect(streamMessage).toHaveBeenCalledTimes(2);
+    expect(streamMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ model: "claude-sonnet-4-6", max_tokens: 6_000 }),
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
   });
