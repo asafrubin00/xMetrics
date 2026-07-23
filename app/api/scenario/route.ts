@@ -59,16 +59,27 @@ export async function POST(request: Request): Promise<Response> {
       const message = await client.messages.create(
         {
           model: "claude-sonnet-4-6",
-          max_tokens: 5_000,
+          max_tokens: 12_000,
           system: SCENARIO_SYSTEM_PROMPT,
           messages: [{ role: "user", content: userPrompt }],
         },
         { signal: AbortSignal.timeout(60_000) },
       );
-      const scenario = parseScenarioResponse(responseText(message), memberIds);
+      const rawResponseText = responseText(message);
+      const scenario = parseScenarioResponse(rawResponseText, memberIds);
       if (scenario) return Response.json(scenario);
+      console.error("Scenario response failed validation", {
+        attempt: attempt + 1,
+        stopReason: message.stop_reason,
+        responsePreview: rawResponseText.slice(0, 800),
+      });
     }
-  } catch {
+  } catch (error) {
+    console.error("Scenario generation failed", {
+      error,
+      status: error instanceof Anthropic.APIError ? error.status : undefined,
+      message: error instanceof Error ? error.message : String(error),
+    });
     return Response.json(
       { error: "The scenario could not be generated. Please try again." },
       { status: 502 },
