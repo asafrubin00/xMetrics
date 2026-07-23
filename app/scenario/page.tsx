@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Room } from "@/components/room";
 import { useSession } from "@/components/session-provider";
 import { TRAITS } from "@/lib/traits.config";
 import type { Scenario } from "@/lib/types";
@@ -20,10 +21,54 @@ function LoadingState() {
   );
 }
 
+function MomentCard({
+  memberName,
+  role,
+  moment,
+  onInteraction,
+  onVisibility,
+}: {
+  memberName: string;
+  role: string;
+  moment: string;
+  onInteraction: (active: boolean) => void;
+  onVisibility: (visible: boolean) => void;
+}) {
+  const cardRef = useRef<HTMLQuoteElement>(null);
+
+  useEffect(() => {
+    if (!cardRef.current || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => onVisibility(entry.isIntersecting),
+      { threshold: 0.65 },
+    );
+    observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [onVisibility]);
+
+  return (
+    <blockquote
+      ref={cardRef}
+      tabIndex={0}
+      onMouseEnter={() => onInteraction(true)}
+      onMouseLeave={() => onInteraction(false)}
+      onFocus={() => onInteraction(true)}
+      onBlur={() => onInteraction(false)}
+      className="border-l border-gold-500 bg-navy-900 px-5 py-4 outline-none transition-colors focus-visible:bg-navy-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-400"
+    >
+      <p className="text-sm leading-6 text-cream-100">{moment}</p>
+      <footer className="mt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-400">{memberName} · {role}</footer>
+    </blockquote>
+  );
+}
+
 export default function ScenarioPage() {
   const router = useRouter();
   const { session, setScenario, setChosenOptionId } = useSession();
   const [beatIndex, setBeatIndex] = useState(0);
+  const [contextOpen, setContextOpen] = useState(false);
+  const [interactionMemberId, setInteractionMemberId] = useState<string>();
+  const [visibleMemberId, setVisibleMemberId] = useState<string>();
   const [status, setStatus] = useState<"idle" | "loading" | "error">(
     session.scenario ? "idle" : "loading",
   );
@@ -83,21 +128,102 @@ export default function ScenarioPage() {
 
   const scenario = session.scenario;
   const beat = scenario.beats[beatIndex];
+  const highlightedMemberId = interactionMemberId ?? visibleMemberId;
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col px-5 py-7 sm:px-9 lg:px-14 lg:py-10">
       <header className="border-b border-navy-700/70 pb-5"><div><p className="font-display text-xl text-cream-50">xMetrics</p><p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-gold-400">Pressure scenario</p></div></header>
-      <p className="mt-6 max-w-3xl text-sm leading-6 text-cream-300/80">{scenario.companyContext}</p>
 
-      <section className="flex flex-1 flex-col justify-center py-12 lg:py-16">
-        <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-gold-400"><span>Beat {beat.index} of 3</span><span className="h-px flex-1 bg-gold-500/20" /></div>
-        <h1 className="mt-6 max-w-4xl font-display text-4xl leading-tight text-cream-50 sm:text-5xl lg:text-6xl">{beat.title}</h1>
-        <div className="mt-7 max-w-3xl whitespace-pre-line text-base leading-8 text-cream-100">{beat.body}</div>
+      <div className="grid flex-1 gap-8 py-10 lg:grid-cols-[minmax(330px,0.78fr)_minmax(0,1.22fr)] lg:gap-12">
+        <aside>
+          <div className="lg:sticky lg:top-8">
+            <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">The room</p>
+            <Room
+              members={session.members}
+              highlightIds={highlightedMemberId ? [highlightedMemberId] : []}
+              dimUnhighlighted={Boolean(highlightedMemberId)}
+            />
+          </div>
+        </aside>
 
-        {beat.memberMoments.length > 0 && <div className="mt-9 grid gap-4 md:grid-cols-2">{beat.memberMoments.map((memberMoment, index) => { const member = session.members.find((candidate) => candidate.id === memberMoment.memberId); return <blockquote key={`${memberMoment.memberId}-${index}`} className="border-l border-gold-500 bg-navy-900 px-5 py-4"><p className="text-sm leading-6 text-cream-100">{memberMoment.moment}</p><footer className="mt-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-400">{member?.displayName} · {member?.role}</footer></blockquote>; })}</div>}
+        <section className="min-w-0">
+          <div className="flex items-center gap-3 text-[10px] font-semibold uppercase tracking-[0.22em] text-gold-400">
+            <span>Beat {beat.index} of 3</span>
+            <span className="h-px flex-1 bg-gold-500/20" />
+          </div>
+          <h1 className="mt-6 font-display text-4xl leading-tight text-cream-50 sm:text-5xl">{beat.title}</h1>
 
-        {beatIndex < 2 ? <div className="mt-10 flex justify-end"><button onClick={() => setBeatIndex((current) => current + 1)} className="rounded-lg bg-gold-500 px-6 py-3 text-sm font-semibold text-navy-950 hover:bg-gold-400">Continue</button></div> : <div className="mt-12"><p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">The decision</p><h2 className="mt-2 font-display text-3xl text-cream-50">Choose the course this team takes</h2><div className="mt-6 grid gap-4 lg:grid-cols-3">{scenario.options.map((option) => <button key={option.id} onClick={() => { setChosenOptionId(option.id); router.push("/debrief"); }} className="group rounded-xl border border-navy-700 bg-navy-900 p-6 text-left transition hover:-translate-y-0.5 hover:border-gold-500/70"><span className="font-display text-xl text-cream-50 group-hover:text-gold-400">{option.title}</span><span className="mt-3 block text-sm leading-6 text-cream-300">{option.description}</span></button>)}</div></div>}
-      </section>
+          {beatIndex === 0 ? (
+            <p className="mt-6 max-w-[68ch] text-sm leading-6 text-cream-300/80">{scenario.companyContext}</p>
+          ) : (
+            <div className="mt-5">
+              <button
+                type="button"
+                aria-expanded={contextOpen}
+                onClick={() => setContextOpen((open) => !open)}
+                className="text-xs font-semibold uppercase tracking-[0.16em] text-gold-400"
+              >
+                Company context · {contextOpen ? "Hide" : "Show"}
+              </button>
+              {contextOpen && <p className="mt-4 max-w-[68ch] text-sm leading-6 text-cream-300/80">{scenario.companyContext}</p>}
+            </div>
+          )}
+
+          <div className="mt-8 grid gap-7 xl:grid-cols-[minmax(0,68ch)_minmax(230px,0.65fr)]">
+            <div className="space-y-5">
+              {beat.body.split(/\n\s*\n/).filter(Boolean).map((paragraph, index) => (
+                <p key={index} className="max-w-[68ch] text-base leading-8 text-cream-100">{paragraph}</p>
+              ))}
+            </div>
+            {beat.memberMoments.length > 0 && (
+              <div className="space-y-4">
+                {beat.memberMoments.map((memberMoment, index) => {
+                  const member = session.members.find((candidate) => candidate.id === memberMoment.memberId);
+                  return (
+                    <MomentCard
+                      key={`${memberMoment.memberId}-${index}`}
+                      memberName={member?.displayName ?? "Team member"}
+                      role={member?.role ?? ""}
+                      moment={memberMoment.moment}
+                      onInteraction={(active) => setInteractionMemberId(active ? memberMoment.memberId : undefined)}
+                      onVisibility={(visible) => setVisibleMemberId(visible ? memberMoment.memberId : undefined)}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {beatIndex < 2 ? (
+            <div className="mt-10 flex justify-end">
+              <button
+                onClick={() => {
+                  setBeatIndex((current) => current + 1);
+                  setContextOpen(false);
+                  setInteractionMemberId(undefined);
+                  setVisibleMemberId(undefined);
+                }}
+                className="rounded-lg bg-gold-500 px-6 py-3 text-sm font-semibold text-navy-950 hover:bg-gold-400"
+              >
+                Continue
+              </button>
+            </div>
+          ) : (
+            <div className="mt-12">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">The decision</p>
+              <h2 className="mt-2 font-display text-3xl text-cream-50">Choose the course this team takes</h2>
+              <div className="mt-6 grid gap-4 lg:grid-cols-3">
+                {scenario.options.map((option) => (
+                  <button key={option.id} onClick={() => { setChosenOptionId(option.id); router.push("/debrief"); }} className="group rounded-xl border border-navy-700 bg-navy-900 p-6 text-left transition hover:-translate-y-0.5 hover:border-gold-500/70">
+                    <span className="font-display text-xl text-cream-50 group-hover:text-gold-400">{option.title}</span>
+                    <span className="mt-3 block text-sm leading-6 text-cream-300">{option.description}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
     </main>
   );
 }
