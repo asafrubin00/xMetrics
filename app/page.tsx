@@ -118,7 +118,7 @@ export default function TeamBuilder() {
   };
 
   return (
-    <main className="flex min-h-screen w-full flex-col lg:h-screen lg:overflow-hidden">
+    <main className="mx-auto flex min-h-screen w-full max-w-[1680px] flex-col lg:h-screen lg:overflow-hidden">
       <header className="shrink-0 border-b border-navy-700/70 px-5 py-5 sm:px-8 lg:px-10">
         <h1 className="font-display text-3xl text-cream-50">xMetrics</h1>
         <p className="mt-1 text-xs tracking-wide text-gold-400">psychometrics, multiplied.</p>

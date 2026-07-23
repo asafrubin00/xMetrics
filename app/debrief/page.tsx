@@ -58,8 +58,8 @@ function DebriefCard({
   return (
     <section className="rounded-2xl border border-navy-700 bg-navy-900/60 p-6 sm:p-8">
       <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">{eyebrow}</p>
-      <h2 className="mt-3 font-display text-3xl text-cream-50 sm:text-4xl">{title}</h2>
-      <div className="mt-6 max-w-3xl whitespace-pre-line text-base leading-8 text-cream-100">{text}</div>
+      <h2 className="mt-3 font-display text-2xl text-cream-50 sm:text-3xl">{title}</h2>
+      <div className="mt-6 whitespace-pre-line text-base leading-8 text-cream-100 min-[1281px]:columns-2 min-[1281px]:gap-12">{text}</div>
     </section>
   );
 }
@@ -215,7 +215,7 @@ export default function DebriefPage() {
       <main className="flex min-h-screen items-center justify-center px-6 text-center">
         <div className="max-w-lg">
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-400">Debrief unavailable</p>
-          <h1 className="mt-4 font-display text-4xl text-cream-50">A decision must come first</h1>
+          <h1 className="mt-4 font-display text-3xl text-cream-50 sm:text-4xl">A decision must come first</h1>
           <p className="mt-4 leading-7 text-cream-300">Run the team through a scenario and choose a course before opening the investor debrief.</p>
           <Link href="/scenario" className="mt-7 inline-block rounded-lg bg-gold-500 px-5 py-3 text-sm font-semibold text-navy-950">Return to scenario</Link>
         </div>
@@ -236,7 +236,7 @@ export default function DebriefPage() {
       <main className="flex min-h-screen items-center justify-center px-6 text-center">
         <div className="max-w-lg">
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-400">Debrief interrupted</p>
-          <h1 className="mt-4 font-display text-4xl text-cream-50">The analysis could not be completed</h1>
+          <h1 className="mt-4 font-display text-3xl text-cream-50 sm:text-4xl">The analysis could not be completed</h1>
           <p className="mt-4 leading-7 text-cream-300">The scenario and team are still intact. You can retry the debrief without repeating the decision.</p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link href="/scenario" className="rounded-lg border border-navy-700 px-5 py-3 text-sm text-cream-100">Back to scenario</Link>
@@ -248,12 +248,12 @@ export default function DebriefPage() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-7xl px-5 py-7 sm:px-9 lg:px-12 lg:py-9">
+    <main className="mx-auto min-h-screen w-full max-w-[1680px] px-5 py-7 sm:px-9 lg:px-12 lg:py-9">
       <header className="border-b border-navy-700/70 pb-5">
         <p className="font-display text-xl text-cream-50">xMetrics</p>
         <p className="mt-1 text-[10px] uppercase tracking-[0.2em] text-gold-400">Investor debrief</p>
       </header>
-      <h1 className="py-6 font-display text-4xl leading-tight text-cream-50 sm:text-5xl">What this team revealed</h1>
+      <h1 className="py-6 font-display text-3xl leading-tight text-cream-50 sm:text-4xl">What this team revealed</h1>
 
       <section className="grid items-center gap-7 border-b border-navy-700/70 pb-7 lg:grid-cols-[minmax(0,40%)_minmax(0,60%)] lg:gap-10">
         <div>
@@ -285,11 +285,13 @@ export default function DebriefPage() {
       {sections.whatHappened !== undefined && (
         <section className="rounded-2xl border border-navy-700 bg-navy-900/60 p-6 sm:p-8">
           <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">01 · Team dynamics</p>
-          <h2 className="mt-3 font-display text-3xl text-cream-50 sm:text-4xl">What happened here</h2>
-          {whatHappenedParagraphs[0] && <p className="mt-6 max-w-3xl text-base leading-8 text-cream-100">{whatHappenedParagraphs[0]}</p>}
-          {fullAnalysisOpen && whatHappenedParagraphs.slice(1).map((paragraph, index) => (
-            <p key={index} className="mt-5 max-w-3xl text-base leading-8 text-cream-100">{paragraph}</p>
-          ))}
+          <h2 className="mt-3 font-display text-2xl text-cream-50 sm:text-3xl">What happened here</h2>
+          <div className="min-[1281px]:columns-2 min-[1281px]:gap-12">
+            {whatHappenedParagraphs[0] && <p className="mt-6 text-base leading-8 text-cream-100">{whatHappenedParagraphs[0]}</p>}
+            {fullAnalysisOpen && whatHappenedParagraphs.slice(1).map((paragraph, index) => (
+              <p key={index} className="mt-5 text-base leading-8 text-cream-100">{paragraph}</p>
+            ))}
+          </div>
           {whatHappenedParagraphs.length > 1 && (
             <button type="button" aria-expanded={fullAnalysisOpen} onClick={() => setFullAnalysisOpen((open) => !open)} className="mt-6 text-xs font-semibold uppercase tracking-[0.16em] text-gold-400">
               {fullAnalysisOpen ? "Show less" : "Read the full analysis"}
@@ -301,8 +303,8 @@ export default function DebriefPage() {
       {sections.investorFindings !== undefined && (
         <section className="rounded-2xl border border-navy-700 bg-navy-900/60 p-6 sm:p-8">
           <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">03 · Diligence</p>
-          <h2 className="mt-3 font-display text-3xl text-cream-50 sm:text-4xl">Investor lens</h2>
-          <ul className="mt-7 grid gap-4 md:grid-cols-2">
+          <h2 className="mt-3 font-display text-2xl text-cream-50 sm:text-3xl">Investor lens</h2>
+          <ul className="mt-7 grid gap-4 lg:grid-cols-2 min-[1600px]:grid-cols-3">
             {findingsFromText(sections.investorFindings).map((finding) => (
               <li key={finding} className="rounded-xl border border-navy-700 bg-navy-950/50 p-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-400">{findingLabel(finding)}</p>

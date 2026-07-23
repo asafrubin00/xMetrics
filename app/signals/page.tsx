@@ -69,7 +69,7 @@ export default function TeamSignals() {
       <main className="flex min-h-screen items-center justify-center px-5">
         <div className="max-w-lg text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">Team signals</p>
-          <h1 className="mt-3 font-display text-4xl text-cream-50">The room is not assembled yet</h1>
+          <h1 className="mt-3 font-display text-3xl text-cream-50 sm:text-4xl">The room is not assembled yet</h1>
           <p className="mt-4 text-cream-300">Add at least three people before examining how the team may operate together.</p>
           <Link href="/" className="mt-7 inline-block rounded-lg bg-gold-500 px-5 py-3 text-sm font-semibold text-navy-950">Return to team builder</Link>
         </div>
@@ -78,11 +78,11 @@ export default function TeamSignals() {
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-7xl px-5 py-7 sm:px-8 lg:px-12 lg:py-9">
+    <main className="mx-auto min-h-screen w-full max-w-[1680px] px-5 py-7 sm:px-8 lg:px-12 lg:py-9">
       <header className="flex flex-wrap items-end justify-between gap-5 border-b border-navy-700/70 pb-6">
         <div>
           <Link href="/" className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">← Adjust team</Link>
-          <h1 className="mt-4 font-display text-4xl text-cream-50 sm:text-5xl">Team signals</h1>
+          <h1 className="mt-4 font-display text-3xl text-cream-50 sm:text-4xl">Team signals</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-cream-300">Explore the patterns that may shape how this team acts together under pressure.</p>
         </div>
         <p className="text-sm text-cream-300">{session.members.length} people assessed</p>
@@ -151,7 +151,7 @@ export default function TeamSignals() {
 
         <section aria-labelledby="findings-heading">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">Findings</p>
-          <h2 id="findings-heading" className="mt-2 font-display text-3xl text-cream-50">What stands out</h2>
+          <h2 id="findings-heading" className="mt-2 font-display text-2xl text-cream-50 sm:text-3xl">What stands out</h2>
           {session.signals.length === 0 ? (
             <p className="mt-6 rounded-xl border border-navy-700 bg-navy-900 p-5 text-sm leading-6 text-cream-300">No threshold-level concentrations, vacuums or polarities appear in this team.</p>
           ) : (
@@ -178,7 +178,7 @@ export default function TeamSignals() {
                       <span className="rounded-full border border-navy-700 px-2 py-0.5 text-xs text-cream-300">{findings.length}</span>
                     </button>
                     {expanded && (
-                      <div className="space-y-3 border-t border-navy-700/70 p-3">
+                      <div className="grid gap-3 border-t border-navy-700/70 p-3 min-[1440px]:grid-cols-2">
                         {findings.map((signal) => {
                           const key = signalKey(signal);
                           const pinned = pinnedKey === key;
