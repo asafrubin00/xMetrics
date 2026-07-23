@@ -194,7 +194,7 @@ export function Room({
               dominantBaseline="central"
               fill="#F8F4EA"
               fontFamily="var(--font-playfair-display), serif"
-              fontSize="22"
+              fontSize="28"
             >
               {initials(member.displayName)}
             </text>
@@ -203,7 +203,7 @@ export function Room({
               textAnchor="middle"
               fill={isHighlighted ? "#F8F4EA" : "#D5CCB9"}
               fontFamily="var(--font-inter), sans-serif"
-              fontSize="15"
+              fontSize="20"
               className="hidden sm:block"
             >
               {member.displayName}
@@ -213,7 +213,7 @@ export function Room({
               textAnchor="middle"
               fill={isHighlighted ? "#F8F4EA" : "#D5CCB9"}
               fontFamily="var(--font-inter), sans-serif"
-              fontSize="17"
+              fontSize="25"
               className="sm:hidden"
             >
               {firstName(member.displayName)}
@@ -223,7 +223,7 @@ export function Room({
               textAnchor="middle"
               fill="#C9A227"
               fontFamily="var(--font-inter), sans-serif"
-              fontSize="10"
+              fontSize="12"
               letterSpacing="1.4"
               className="hidden uppercase sm:block"
             >

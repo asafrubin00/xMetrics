@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { Room } from "@/components/room";
 import { useSession } from "@/components/session-provider";
 import { DEMO_TEAM, PERSONAS } from "@/lib/personas.config";
 import { TRAITS } from "@/lib/traits.config";
@@ -85,15 +86,97 @@ export default function TeamBuilder() {
         <button onClick={() => setMembers(DEMO_TEAM.map((id) => PERSONAS.find((persona) => persona.id === id)!))} className="rounded-lg border border-gold-500/50 px-3 py-2 text-xs font-semibold text-gold-400 hover:bg-gold-500/10 sm:px-4 sm:text-sm">Load demo team</button>
       </header>
 
-      <section className="py-8"><div className="flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">Your team</p><h2 className="mt-2 font-display text-3xl text-cream-50">The people in the room</h2></div><span className="text-sm text-cream-300">{session.members.length} / 6</span></div>
-        {session.members.length === 0 ? <p className="mt-6 rounded-xl border border-dashed border-navy-700 p-6 text-sm text-cream-300">Choose preset profiles below or add a team member manually.</p> : <div className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{session.members.map((member) => <article key={member.id} className="rounded-xl border border-navy-700 bg-navy-900 p-5"><div className="flex justify-between gap-3"><div><h3 className="font-display text-xl text-cream-50">{member.displayName}</h3><p className="mt-1 text-xs uppercase tracking-wider text-gold-400">{member.role}</p></div><div className="flex gap-2 text-xs"><button onClick={() => { setEditingId(member.id); setShowManualForm(false); }} className="text-cream-300 hover:text-cream-50">Edit</button><button onClick={() => setMembers(session.members.filter((current) => current.id !== member.id))} className="text-cream-300 hover:text-cream-50">Remove</button></div></div><ul className="mt-4 space-y-1 text-sm text-cream-300">{traitSummary(member).map((summary) => <li key={summary}>— {summary}</li>)}</ul></article>)}</div>}
-      </section>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(390px,0.78fr)] lg:gap-12">
+        <div className="order-2 min-w-0 lg:order-1">
+          <section className="py-8">
+            <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">Your team</p>
+                <h2 className="mt-2 font-display text-3xl text-cream-50">The people in the room</h2>
+              </div>
+              <span className="text-sm text-cream-300">{session.members.length} / 6</span>
+            </div>
+            {session.members.length === 0 ? (
+              <p className="mt-6 rounded-xl border border-dashed border-navy-700 p-6 text-sm text-cream-300">
+                Choose a preset profile below or add a team member manually.
+              </p>
+            ) : (
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {session.members.map((member) => (
+                  <article key={member.id} className="rounded-xl border border-navy-700 bg-navy-900 p-5">
+                    <div className="flex justify-between gap-3">
+                      <div>
+                        <h3 className="font-display text-xl text-cream-50">{member.displayName}</h3>
+                        <p className="mt-1 text-xs uppercase tracking-wider text-gold-400">{member.role}</p>
+                      </div>
+                      <div className="flex gap-2 text-xs">
+                        <button onClick={() => { setEditingId(member.id); setShowManualForm(false); }} className="text-cream-300 hover:text-cream-50">Edit</button>
+                        <button onClick={() => setMembers(session.members.filter((current) => current.id !== member.id))} className="text-cream-300 hover:text-cream-50">Remove</button>
+                      </div>
+                    </div>
+                    <ul className="mt-4 space-y-1 text-sm text-cream-300">
+                      {traitSummary(member).map((summary) => <li key={summary}>— {summary}</li>)}
+                    </ul>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
 
-      {(showManualForm || editingMember) && <section className="mb-10"><MemberForm key={editingMember?.id ?? "new"} member={editingMember} onCancel={() => { setEditingId(null); setShowManualForm(false); }} onSave={saveMember} /></section>}
+          {(showManualForm || editingMember) && (
+            <section className="mb-10">
+              <MemberForm
+                key={editingMember?.id ?? "new"}
+                member={editingMember}
+                onCancel={() => { setEditingId(null); setShowManualForm(false); }}
+                onSave={saveMember}
+              />
+            </section>
+          )}
 
-      {!showManualForm && !editingMember && <section className="border-t border-navy-700/70 pt-8"><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">Preset profiles</p><h2 className="mt-2 font-display text-2xl text-cream-50">Build the room quickly</h2></div><button disabled={session.members.length >= 6} onClick={() => setShowManualForm(true)} className="rounded-lg border border-cream-300/30 px-4 py-2 text-sm text-cream-100 hover:border-gold-500 disabled:opacity-40">Add manually</button></div><div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">{PERSONAS.map((persona) => { const disabled = selectedIds.has(persona.id) || session.members.length >= 6; return <button key={persona.id} disabled={disabled} onClick={() => setMembers([...session.members, persona])} className="rounded-xl border border-navy-700 bg-navy-900 p-4 text-left transition hover:-translate-y-0.5 hover:border-gold-500/60 disabled:cursor-not-allowed disabled:opacity-35"><span className="block font-display text-base text-cream-50">{persona.displayName}</span><span className="mt-1 block text-xs text-cream-300">{persona.role}</span></button>; })}</div></section>}
+          {!showManualForm && !editingMember && (
+            <section className="border-t border-navy-700/70 pt-8">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">Preset profiles</p>
+                  <h2 className="mt-2 font-display text-2xl text-cream-50">Build the room quickly</h2>
+                </div>
+                <button disabled={session.members.length >= 6} onClick={() => setShowManualForm(true)} className="rounded-lg border border-cream-300/30 px-4 py-2 text-sm text-cream-100 hover:border-gold-500 disabled:opacity-40">Add manually</button>
+              </div>
+              <div className="mt-5 grid grid-cols-2 gap-3 2xl:grid-cols-3">
+                {PERSONAS.map((persona) => {
+                  const disabled = selectedIds.has(persona.id) || session.members.length >= 6;
+                  return (
+                    <button key={persona.id} disabled={disabled} onClick={() => setMembers([...session.members, persona])} className="rounded-xl border border-navy-700 bg-navy-900 p-4 text-left transition hover:-translate-y-0.5 hover:border-gold-500/60 disabled:cursor-not-allowed disabled:opacity-35">
+                      <span className="block font-display text-base text-cream-50">{persona.displayName}</span>
+                      <span className="mt-1 block text-xs text-cream-300">{persona.role}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
 
-      <div className="mt-10 flex flex-col items-stretch gap-4 border-t border-navy-700 bg-navy-950/95 py-5 backdrop-blur sm:sticky sm:bottom-0 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-cream-300">Add {Math.max(0, 3 - session.members.length)} more to continue</p><Link aria-disabled={session.members.length < 3} tabIndex={session.members.length < 3 ? -1 : undefined} href={session.members.length >= 3 ? "/signals" : "#"} className={`rounded-lg px-6 py-3 text-center text-sm font-semibold ${session.members.length >= 3 ? "bg-gold-500 text-navy-950 hover:bg-gold-400" : "cursor-not-allowed bg-navy-800 text-cream-300/50"}`}>Continue to team signals</Link></div>
+          <div className="mt-10 flex flex-col items-stretch gap-4 border-t border-navy-700 bg-navy-950/95 py-5 backdrop-blur sm:sticky sm:bottom-0 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-cream-300">Add {Math.max(0, 3 - session.members.length)} more to continue</p>
+            <Link aria-disabled={session.members.length < 3} tabIndex={session.members.length < 3 ? -1 : undefined} href={session.members.length >= 3 ? "/signals" : "#"} className={`rounded-lg px-6 py-3 text-center text-sm font-semibold ${session.members.length >= 3 ? "bg-gold-500 text-navy-950 hover:bg-gold-400" : "cursor-not-allowed bg-navy-800 text-cream-300/50"}`}>Continue to team signals</Link>
+          </div>
+        </div>
+
+        <aside className="order-1 pt-8 lg:order-2">
+          <div className="lg:sticky lg:top-8">
+            <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">The room</p>
+            <Room
+              members={session.members}
+              emptySeatCount={Math.min(3, 6 - session.members.length)}
+              onSeatClick={(memberId) => {
+                setEditingId(memberId);
+                setShowManualForm(false);
+              }}
+            />
+          </div>
+        </aside>
+      </div>
     </main>
   );
 }
