@@ -170,7 +170,7 @@ export default function ScenarioPage() {
         </section>
 
         <section className="pt-7">
-          <div className="min-[1281px]:columns-2 min-[1281px]:gap-12 min-[1600px]:columns-3">
+          <div>
               {beat.body.split(/\n\s*\n/).filter(Boolean).map((paragraph, index) => (
               <p key={index} className="mb-5 text-base leading-8 text-cream-100">{paragraph}</p>
               ))}

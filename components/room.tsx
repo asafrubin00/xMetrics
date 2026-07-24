@@ -34,10 +34,6 @@ function initials(displayName: string): string {
     .join("");
 }
 
-function firstName(displayName: string): string {
-  return displayName.trim().split(/\s+/)[0] ?? displayName;
-}
-
 function point(slot: SeatSlot): { x: number; y: number } {
   return { x: slot.left * 10, y: slot.top * 10 };
 }
@@ -63,15 +59,12 @@ function SeatLabel({
 }) {
   return (
     <span
-      className={`pointer-events-none absolute left-1/2 w-24 -translate-x-1/2 text-center sm:w-32 ${labelAbove ? "bottom-[44px]" : "top-[44px]"}`}
+      className={`pointer-events-none absolute left-1/2 w-max -translate-x-1/2 text-center ${labelAbove ? "bottom-[calc(100%+8px)]" : "top-[calc(100%+8px)]"}`}
     >
-      <span className={`hidden truncate text-sm sm:block ${highlighted ? "text-cream-50" : "text-cream-300"}`}>
+      <span className={`block whitespace-nowrap text-sm leading-4 ${highlighted ? "text-cream-50" : "text-cream-300"}`}>
         {member.displayName}
       </span>
-      <span className={`block truncate text-sm sm:hidden ${highlighted ? "text-cream-50" : "text-cream-300"}`}>
-        {firstName(member.displayName)}
-      </span>
-      <span className="mt-0.5 hidden truncate text-[9px] font-semibold uppercase tracking-[0.14em] text-gold-400 sm:block">
+      <span className="mx-auto block max-w-[130px] whitespace-normal text-[9px] font-semibold uppercase leading-3 tracking-[0.14em] text-gold-400">
         {member.role}
       </span>
     </span>
@@ -225,7 +218,7 @@ export function Room({
             } : undefined}
             onClick={() => onSeatClick?.(member.id)}
             {...dropHandlers(index)}
-            className={`group absolute z-10 h-[68px] w-[68px] -translate-x-1/2 -translate-y-1/2 rounded-full border bg-navy-900 font-display text-xl text-cream-50 outline-none transition-[opacity,box-shadow,border-width] duration-300 focus-visible:ring-4 focus-visible:ring-cream-50 motion-reduce:transition-none ${interactive || onSeatClick ? "cursor-pointer" : "cursor-default"} ${isHighlighted || hoveredSlot === index ? "border-[3px] border-gold-500 shadow-[0_0_20px_rgba(201,162,39,0.28)]" : "border-[1.5px] border-gold-500"} ${isDimmed || (dragPayload === `member:${member.id}` && hoveredSlot !== index) ? "opacity-35" : "opacity-100"}`}
+            className={`group absolute z-10 h-[72px] w-[72px] -translate-x-1/2 -translate-y-1/2 rounded-full border bg-navy-900 font-display text-xl text-cream-50 outline-none transition-[opacity,box-shadow,border-width] duration-300 focus-visible:ring-4 focus-visible:ring-cream-50 motion-reduce:transition-none ${interactive || onSeatClick ? "cursor-pointer" : "cursor-default"} ${isHighlighted || hoveredSlot === index ? "border-[3px] border-gold-500 shadow-[0_0_20px_rgba(201,162,39,0.28)]" : "border-[1.5px] border-gold-500"} ${isDimmed || (dragPayload === `member:${member.id}` && hoveredSlot !== index) ? "opacity-35" : "opacity-100"}`}
             style={{ left: `${slot.left}%`, top: `${slot.top}%` }}
           >
             {initials(member.displayName)}
@@ -243,7 +236,7 @@ export function Room({
             tabIndex={0}
             aria-label="Empty seat"
             {...dropHandlers(members.length + offset)}
-            className={`absolute z-10 h-[68px] w-[68px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed outline-none transition-[opacity,box-shadow,border-color] focus-visible:ring-4 focus-visible:ring-cream-50 motion-reduce:transition-none ${hoveredSlot === members.length + offset ? "border-gold-500 shadow-[0_0_20px_rgba(201,162,39,0.28)]" : "border-cream-100/30"} ${dragPayload?.startsWith("member:") ? "opacity-45" : "opacity-100"}`}
+            className={`absolute z-10 h-[72px] w-[72px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed outline-none transition-[opacity,box-shadow,border-color] focus-visible:ring-4 focus-visible:ring-cream-50 motion-reduce:transition-none ${hoveredSlot === members.length + offset ? "border-gold-500 shadow-[0_0_20px_rgba(201,162,39,0.28)]" : "border-cream-100/30"} ${dragPayload?.startsWith("member:") ? "opacity-45" : "opacity-100"}`}
             style={{ left: `${slot.left}%`, top: `${slot.top}%` }}
           />
         );
@@ -256,10 +249,10 @@ export function Room({
             role="img"
             tabIndex={0}
             aria-label={ghostSeatLabel}
-            className="absolute z-10 h-[68px] w-[68px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-cream-100/25 bg-navy-950 outline-none focus-visible:ring-4 focus-visible:ring-cream-50"
+            className="absolute z-10 h-[72px] w-[72px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-dashed border-cream-100/25 bg-navy-950 outline-none focus-visible:ring-4 focus-visible:ring-cream-50"
             style={{ left: `${slot.left}%`, top: `${slot.top}%` }}
           >
-            <span className={`pointer-events-none absolute left-1/2 w-24 -translate-x-1/2 text-center font-display text-xs italic text-cream-300/70 sm:w-32 ${slot.labelAbove ? "bottom-[44px]" : "top-[44px]"}`}>
+            <span className={`pointer-events-none absolute left-1/2 w-max max-w-[130px] -translate-x-1/2 text-center font-display text-xs italic text-cream-300/70 ${slot.labelAbove ? "bottom-[calc(100%+8px)]" : "top-[calc(100%+8px)]"}`}>
               {ghostSeatLabel}
             </span>
           </div>
