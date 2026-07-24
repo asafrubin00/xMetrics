@@ -200,7 +200,6 @@ export default function TeamBuilder() {
                 : `${session.members.length} of 6 seats filled`}
             </p>
             <Link aria-disabled={session.members.length < 3} tabIndex={session.members.length < 3 ? -1 : undefined} href={session.members.length >= 3 ? "/signals" : "#"} className={`mt-4 block rounded-lg px-6 py-3 text-center text-sm font-semibold ${session.members.length >= 3 ? "bg-gold-500 text-navy-950 hover:bg-gold-400" : "cursor-not-allowed bg-navy-800 text-cream-300/50"}`}>Continue to team signals</Link>
-            <button onClick={() => setMembers(DEMO_TEAM.map((id) => PERSONAS.find((persona) => persona.id === id)!))} className="mt-3 text-xs font-semibold text-gold-400 hover:text-gold-300">Load demo team</button>
           </div>
         </section>
 
@@ -239,6 +238,22 @@ export default function TeamBuilder() {
               <button disabled={session.members.length >= 6} onClick={() => setShowManualForm(true)} className="rounded-lg border border-cream-300/30 px-3 py-2 text-xs text-cream-100 hover:border-gold-500 disabled:opacity-40">Add manually</button>
             )}
           </div>
+
+          <button
+            onClick={() => setMembers(DEMO_TEAM.map((id) => PERSONAS.find((persona) => persona.id === id)!))}
+            className={`mt-5 w-full rounded-xl border bg-transparent p-4 text-left transition-colors motion-reduce:transition-none ${
+              session.members.length === 0
+                ? "border-gold-500/80 hover:bg-gold-500/5"
+                : "border-navy-700 hover:border-cream-300/30"
+            }`}
+          >
+            <span className={`block font-display text-lg ${session.members.length === 0 ? "text-gold-400" : "text-cream-100"}`}>
+              Load demo team
+            </span>
+            <span className="mt-1 block text-xs leading-5 text-cream-300">
+              Five profiles with built-in tensions — the fastest way to see xMetrics work.
+            </span>
+          </button>
 
           {(showManualForm || editingMember) ? (
             <div className="mt-5">
