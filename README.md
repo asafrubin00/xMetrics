@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# xMetrics
 
-## Getting Started
+xMetrics is a prototype diligence product for exploring how a leadership team may behave together under pressure. It combines configured psychometric profiles, deterministic team signals, and generated decision scenarios in a four-screen investor workflow.
 
-First, run the development server:
+The product was built from [`xmetrics-foundation.md`](./xmetrics-foundation.md), [`xmetrics-product-spec.md`](./xmetrics-product-spec.md), and the staged implementation instructions in [`xmetrics-codex-prompts.md`](./xmetrics-codex-prompts.md). The Step 5 layout addenda refine presentation without changing the underlying assessment or generation model.
+
+## Setup
+
+```bash
+npm i
+```
+
+Create `.env.local`:
+
+```bash
+ANTHROPIC_API_KEY=your_anthropic_api_key
+XMETRICS_PASSWORD=your_shared_prototype_password
+```
+
+`XMETRICS_PASSWORD` is optional during local development. When it is unset, the access gate allows requests through.
+
+Start the application:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Verification
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm test
+npm run typecheck
+npm run lint
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deliberate scope limits
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This prototype does not include a database, multi-user accounts, a live psychometric engine, questionnaire administration, recruitment matching, validity claims, or payments. The shared-password gate controls prototype access only; it is not a user authentication system.

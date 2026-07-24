@@ -158,7 +158,7 @@ export default function TeamBuilder() {
                     else memberCards.current.delete(member.id);
                   }}
                   tabIndex={-1}
-                  className={`rounded-xl border bg-navy-900 p-4 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold-500 ${editingId === member.id ? "border-gold-500/60" : "border-navy-700"}`}
+                  className={`touch-pan-y rounded-xl border bg-navy-900 p-4 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-gold-500 ${editingId === member.id ? "border-gold-500/60" : "border-navy-700"}`}
                 >
                   <div className="flex justify-between gap-3">
                     <div>
@@ -285,7 +285,7 @@ export default function TeamBuilder() {
                     onClick={() => {
                       if (!roomFull) setMembers([...session.members, persona]);
                     }}
-                    className={`rounded-xl border border-navy-700 bg-navy-900 p-4 text-left transition hover:-translate-y-0.5 hover:border-gold-500/60 motion-reduce:transform-none disabled:cursor-not-allowed disabled:opacity-35 ${roomFull && !selected ? "opacity-65" : ""}`}
+                    className={`touch-pan-y rounded-xl border border-navy-700 bg-navy-900 p-4 text-left transition hover:-translate-y-0.5 hover:border-gold-500/60 motion-reduce:transform-none disabled:cursor-not-allowed disabled:opacity-35 ${roomFull && !selected ? "opacity-65" : ""}`}
                   >
                     <span className="block font-display text-base text-cream-50">{persona.displayName}</span>
                     <span className="mt-1 block text-xs text-cream-300">{persona.role}</span>
