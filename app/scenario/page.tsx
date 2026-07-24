@@ -111,7 +111,7 @@ export default function ScenarioPage() {
   if (session.members.length < 3) {
     return (
       <main className="flex min-h-screen items-center justify-center px-6 text-center">
-        <div className="max-w-lg"><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-400">Scenario unavailable</p><h1 className="mt-4 font-display text-3xl text-cream-50 sm:text-4xl">Bring the team into the room first</h1><p className="mt-4 text-cream-300">A scenario needs at least three team members and their combined signals.</p><Link href="/" className="mt-7 inline-block rounded-lg bg-gold-500 px-5 py-3 text-sm font-semibold text-navy-950">Build the team</Link></div>
+        <div className="max-w-lg"><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-400">Scenario unavailable</p><h1 className="mt-4 font-display text-3xl text-cream-50 sm:text-4xl">Bring the team into the room first</h1><p className="mt-4 text-cream-300">A scenario needs at least three team members and their combined signals.</p><Link href="/build" className="mt-7 inline-block rounded-lg bg-gold-500 px-5 py-3 text-sm font-semibold text-navy-950">Build the team</Link></div>
       </main>
     );
   }

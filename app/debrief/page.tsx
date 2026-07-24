@@ -328,8 +328,8 @@ export default function DebriefPage() {
         <footer className="mt-8 border-t border-navy-700/70 py-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <button onClick={() => { clearGenerated(); router.push("/scenario"); }} className="rounded-lg bg-gold-500 px-5 py-3 text-sm font-semibold text-navy-950">Run a different scenario</button>
-            <button onClick={() => router.push("/")} className="rounded-lg border border-navy-700 px-5 py-3 text-sm text-cream-100">Adjust the team</button>
-            <button onClick={() => { startOver(); router.push("/"); }} className="rounded-lg px-5 py-3 text-sm text-cream-300 hover:text-cream-50">Start over</button>
+            <button onClick={() => router.push("/build")} className="rounded-lg border border-navy-700 px-5 py-3 text-sm text-cream-100">Adjust the team</button>
+            <button onClick={() => { startOver(); router.push("/build"); }} className="rounded-lg px-5 py-3 text-sm text-cream-300 hover:text-cream-50">Start over</button>
           </div>
         </footer>
       )}

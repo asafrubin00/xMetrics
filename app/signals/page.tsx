@@ -71,7 +71,7 @@ export default function TeamSignals() {
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">Team signals</p>
           <h1 className="mt-3 font-display text-3xl text-cream-50 sm:text-4xl">The room is not assembled yet</h1>
           <p className="mt-4 text-cream-300">Add at least three people before examining how the team may operate together.</p>
-          <Link href="/" className="mt-7 inline-block rounded-lg bg-gold-500 px-5 py-3 text-sm font-semibold text-navy-950">Return to team builder</Link>
+          <Link href="/build" className="mt-7 inline-block rounded-lg bg-gold-500 px-5 py-3 text-sm font-semibold text-navy-950">Return to team builder</Link>
         </div>
       </main>
     );
@@ -81,7 +81,7 @@ export default function TeamSignals() {
     <main className="mx-auto min-h-screen w-full max-w-[1680px] px-5 py-7 sm:px-8 lg:px-12 lg:py-9">
       <header className="flex flex-wrap items-end justify-between gap-5 border-b border-navy-700/70 pb-6">
         <div>
-          <Link href="/" className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">← Adjust team</Link>
+          <Link href="/build" className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">← Adjust team</Link>
           <h1 className="mt-4 font-display text-3xl text-cream-50 sm:text-4xl">Team signals</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-cream-300">Explore the patterns that may shape how this team acts together under pressure.</p>
         </div>
