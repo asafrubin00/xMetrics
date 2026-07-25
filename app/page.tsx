@@ -5,11 +5,11 @@ const disclaimer = "xMetrics — prototype. Not a validated assessment instrumen
 export default function CoverPage() {
   return (
     <main className="flex min-h-screen flex-col px-5 py-8 sm:px-8">
-      <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col items-center justify-center py-12 text-center">
+      <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col items-center justify-center py-12 text-center">
         <h1 className="font-display text-6xl leading-none text-cream-50 sm:text-7xl lg:text-8xl">xMetrics</h1>
         <p className="mt-4 text-sm tracking-[0.18em] text-gold-400 sm:text-base">psychometrics, multiplied.</p>
 
-        <div className="mt-14 grid w-full gap-5 text-left sm:grid-cols-2">
+        <div className="mt-14 grid w-full gap-5 text-left sm:grid-cols-2 lg:grid-cols-3">
           <Link
             href="/build"
             className="group rounded-2xl border border-gold-500/70 bg-navy-900 p-7 transition hover:-translate-y-1 hover:border-gold-400 hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 motion-reduce:transform-none sm:p-9"
@@ -30,6 +30,17 @@ export default function CoverPage() {
               How custom scenarios would be authored.
             </span>
             <span className="mt-8 block text-xs font-semibold uppercase tracking-[0.2em] text-cream-300">View concept →</span>
+          </Link>
+
+          <Link
+            href="/search"
+            className="group rounded-2xl border border-gold-500/70 bg-navy-900 p-7 transition hover:-translate-y-1 hover:border-gold-400 hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 motion-reduce:transform-none sm:p-9"
+          >
+            <span className="font-display text-3xl text-cream-50">Search</span>
+            <span className="mt-3 block max-w-sm text-sm leading-6 text-cream-300">
+              Brief an agent, get a shortlist, refine the room.
+            </span>
+            <span className="mt-8 block text-xs font-semibold uppercase tracking-[0.2em] text-gold-400">Try shortlisting →</span>
           </Link>
         </div>
       </div>
