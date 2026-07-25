@@ -96,7 +96,7 @@ export function Room({
     .filter((connection) =>
       memberSlots.has(connection.fromId) && memberSlots.has(connection.toId),
     )
-    .slice(0, 4);
+    .slice(0, 6);
   const connectedIds = visibleConnections.flatMap((connection) => [
     connection.fromId,
     connection.toId,
@@ -163,10 +163,11 @@ export function Room({
           if (connection.kind === "concentration") {
             return (
               <path
+                data-testid="room-connection"
                 key={key}
                 d={concentrationPath(from, to)}
                 fill="none"
-                stroke="#C9A227"
+                stroke="var(--color-gold-500)"
                 strokeWidth="4"
                 opacity="0.9"
               />
@@ -174,12 +175,13 @@ export function Room({
           }
           return (
             <line
+              data-testid="room-connection"
               key={key}
               x1={start.x}
               y1={start.y}
               x2={end.x}
               y2={end.y}
-              stroke={connection.kind === "polarity" ? "#5B7A99" : "#F3EDE0"}
+              stroke={connection.kind === "polarity" ? "var(--color-signal-tension)" : "var(--color-signal-affinity)"}
               strokeOpacity={connection.kind === "dependency" ? 0.5 : 0.9}
               strokeWidth="4"
               strokeDasharray={connection.kind === "polarity" ? "18 14" : undefined}
