@@ -101,7 +101,7 @@ export function LongListPanel({
           </button>
           {longListIds.length >= 3 ? (
             <Link
-              href={`/search?ll=${longListIds.join(",")}`}
+              href={`/search/shortlist-start?ll=${longListIds.join(",")}`}
               className="rounded-full bg-gold-500 px-4 py-2 text-xs font-semibold text-navy-950 hover:bg-gold-400"
             >
               Build shortlist →

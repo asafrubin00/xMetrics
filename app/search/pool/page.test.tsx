@@ -225,7 +225,7 @@ describe("CandidatePoolPage", () => {
 
     expect(screen.getByRole("link", { name: "Build shortlist →" })).toHaveAttribute(
       "href",
-      "/search?ll=maya-chen,elena-rossi,priya-nair",
+      "/search/shortlist-start?ll=maya-chen,elena-rossi,priya-nair",
     );
   });
 

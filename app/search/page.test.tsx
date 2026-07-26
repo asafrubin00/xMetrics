@@ -17,6 +17,8 @@ describe("SearchPage", () => {
   it("falls back to an 18-person long list and empty shortlist", () => {
     render(<SearchPage />);
     expect(screen.getByText("Long list")).toBeInTheDocument();
+    expect(screen.getByLabelText("The brief")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Let the agent build your shortlist" })).toBeInTheDocument();
     expect(screen.getByText("Maya Chen")).toBeInTheDocument();
     expect(screen.getAllByLabelText(/^Candidate /)).toHaveLength(18);
     expect(screen.getAllByLabelText("Empty seat")).toHaveLength(5);
@@ -32,6 +34,35 @@ describe("SearchPage", () => {
     expect(screen.getByLabelText("Candidate Alice Morgan")).toBeInTheDocument();
     expect(screen.getByLabelText("Candidate Benoit Laurent")).toBeInTheDocument();
     expect(screen.queryByLabelText("Candidate Maya Chen")).not.toBeInTheDocument();
+  });
+
+  it("lets the researcher build and edit the shortlist manually", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(
+      {},
+      "",
+      "/search?ll=maya-chen,elena-rossi,priya-nair&mode=manual",
+    );
+    render(<SearchPage />);
+
+    expect(screen.queryByLabelText("The brief")).not.toBeInTheDocument();
+    expect(screen.queryByText("Runners-up")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Let the agent build your shortlist" })).toHaveAttribute(
+      "href",
+      "/search?ll=maya-chen,elena-rossi,priya-nair",
+    );
+
+    const mayaCard = screen.getByRole("button", { name: "Candidate Maya Chen" });
+    await user.click(mayaCard);
+    expect(screen.getByLabelText("Maya Chen, CEO")).toBeInTheDocument();
+    expect(mayaCard).toHaveClass("border-gold-500/70");
+
+    await user.click(mayaCard);
+    expect(screen.queryByLabelText("Maya Chen, CEO")).not.toBeInTheDocument();
+
+    await user.click(mayaCard);
+    await user.click(screen.getByLabelText("Maya Chen, CEO"));
+    expect(screen.queryByLabelText("Maya Chen, CEO")).not.toBeInTheDocument();
   });
 
   it("submits the brief and seats the returned finalists", async () => {
@@ -52,7 +83,7 @@ describe("SearchPage", () => {
     }), { status: 200, headers: { "Content-Type": "application/json" } }));
 
     await user.selectOptions(screen.getByLabelText("Finalists"), "3");
-    await user.click(screen.getByRole("button", { name: "Shortlist" }));
+    await user.click(screen.getByRole("button", { name: "Let the agent build your shortlist" }));
 
     expect(await screen.findByText("Team dynamics")).toBeInTheDocument();
     expect(screen.getByText("Click a seated finalist to see the agent’s reason.")).toBeInTheDocument();
@@ -79,7 +110,7 @@ describe("SearchPage", () => {
       ],
     }), { status: 200, headers: { "Content-Type": "application/json" } }));
     await user.selectOptions(screen.getByLabelText("Finalists"), "3");
-    await user.click(screen.getByRole("button", { name: "Shortlist" }));
+    await user.click(screen.getByRole("button", { name: "Let the agent build your shortlist" }));
     await screen.findByText("Team dynamics");
 
     const dataTransfer = {
@@ -119,7 +150,7 @@ describe("SearchPage", () => {
     }), { status: 200, headers: { "Content-Type": "application/json" } }));
 
     await user.selectOptions(screen.getByLabelText("Finalists"), "3");
-    await user.click(screen.getByRole("button", { name: "Shortlist" }));
+    await user.click(screen.getByRole("button", { name: "Let the agent build your shortlist" }));
 
     expect(await screen.findByRole("heading", { name: "Team dynamics" })).toBeInTheDocument();
     expect(screen.getAllByTestId("room-connection").length).toBeGreaterThan(0);

@@ -86,15 +86,18 @@ function signalLabel(kind: DerivedSignal["kind"]): string {
 
 function SearchInner() {
   const searchParams = useSearchParams();
+  const longListParam = searchParams.get("ll") ?? "";
+  const manualMode = searchParams.get("mode") === "manual";
   const candidates = useMemo(() => {
-    const longListParam = searchParams.get("ll");
     if (!longListParam) return POOL.slice(0, 18);
     const resolved = resolveLongList(longListParam.split(","));
     return resolved.length > 0 ? resolved : POOL.slice(0, 18);
-  }, [searchParams]);
+  }, [longListParam]);
   const maxFinalists = Math.max(3, Math.min(6, candidates.length));
   const [brief, setBrief] = useState(DEFAULT_BRIEF);
   const [seatCount, setSeatCount] = useState(() => Math.min(5, maxFinalists));
+  const [manualSeatCount, setManualSeatCount] = useState(5);
+  const [manualSeated, setManualSeated] = useState<string[]>([]);
   const [shortlist, setShortlist] = useState<Shortlist>();
   const [seatedIds, setSeatedIds] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string>();
@@ -108,11 +111,12 @@ function SearchInner() {
     () => new Map(candidates.map((candidate) => [candidate.id, candidate])),
     [candidates],
   );
+  const activeSeatedIds = manualMode ? manualSeated : seatedIds;
   const seatedCandidates = useMemo(
-    () => seatedIds
+    () => activeSeatedIds
       .map((candidateId) => candidateById.get(candidateId))
       .filter((candidate): candidate is PoolCandidate => Boolean(candidate)),
-    [candidateById, seatedIds],
+    [activeSeatedIds, candidateById],
   );
   const teamSignals = useMemo(
     () => computeSignals(seatedCandidates),
@@ -148,7 +152,7 @@ function SearchInner() {
   );
   const rankById = new Map(shortlist?.ranked.map((candidate) => [candidate.candidateId, candidate.rank]));
   const reasonsById = new Map(shortlist?.picks.map((pick) => [pick.candidateId, pick.reason]));
-  const seatedIdSet = new Set(seatedIds);
+  const seatedIdSet = new Set(activeSeatedIds);
   const runnersUp = shortlist?.ranked
     .filter((ranked) => !seatedIdSet.has(ranked.candidateId))
     .map((ranked) => ({ ...ranked, candidate: candidateById.get(ranked.candidateId) }))
@@ -240,6 +244,17 @@ function SearchInner() {
     setRemoveDropActive(false);
   };
 
+  const toggleManualSeat = (candidateId: string) => {
+    setManualSeated((current) => {
+      if (current.includes(candidateId)) {
+        return current.filter((id) => id !== candidateId);
+      }
+      return current.length < manualSeatCount && current.length < 6
+        ? [...current, candidateId]
+        : current;
+    });
+  };
+
   return (
     <main className="mx-auto flex h-dvh w-full max-w-[1680px] flex-col overflow-hidden">
       <header className="shrink-0 border-b border-navy-700/70 px-5 py-3 sm:px-8 lg:px-10">
@@ -270,15 +285,31 @@ function SearchInner() {
                 <article
                   key={candidate.id}
                   aria-label={`Candidate ${candidate.displayName}`}
-                  draggable={!seatedIdSet.has(candidate.id)}
+                  role={manualMode ? "button" : undefined}
+                  tabIndex={manualMode ? 0 : undefined}
+                  draggable={!manualMode && !seatedIdSet.has(candidate.id)}
+                  onClick={manualMode ? () => toggleManualSeat(candidate.id) : undefined}
+                  onKeyDown={manualMode ? (event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      toggleManualSeat(candidate.id);
+                    }
+                  } : undefined}
                   onDragStart={(event) => {
+                    if (manualMode) return;
                     const payload = `candidate:${candidate.id}`;
                     event.dataTransfer.setData("text/plain", payload);
                     event.dataTransfer.effectAllowed = "move";
                     setDragPayload(payload);
                   }}
                   onDragEnd={() => setDragPayload(undefined)}
-                  className={`group touch-pan-y rounded-lg border bg-navy-900 px-3 py-2.5 transition-opacity ${picked ? "border-gold-500/70" : "border-navy-700"} ${seatedIdSet.has(candidate.id) ? "opacity-45" : "cursor-grab"}`}
+                  className={`group touch-pan-y rounded-lg border bg-navy-900 px-3 py-2.5 transition-opacity ${picked ? "border-gold-500/70 shadow-[0_0_12px_rgba(201,162,39,0.12)]" : "border-navy-700"} ${
+                    manualMode
+                      ? "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500"
+                      : seatedIdSet.has(candidate.id)
+                        ? "opacity-45"
+                        : "cursor-grab"
+                  }`}
                 >
                   <div className="flex items-start gap-2.5">
                     {rank ? (
@@ -299,7 +330,10 @@ function SearchInner() {
                       type="button"
                       aria-label={`Show ${candidate.displayName} profile`}
                       aria-expanded={revealedCandidateId === candidate.id}
-                      onClick={() => setRevealedCandidateId((current) => current === candidate.id ? undefined : candidate.id)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setRevealedCandidateId((current) => current === candidate.id ? undefined : candidate.id);
+                      }}
                       className="mt-0.5 shrink-0 text-xs text-cream-300 hover:text-cream-50"
                     >
                       {revealedCandidateId === candidate.id ? "−" : "+"}
@@ -322,9 +356,52 @@ function SearchInner() {
         </section>
 
         <section className="flex min-h-0 min-w-0 flex-col overflow-hidden">
-          <form onSubmit={runShortlist} className="shrink-0 border-b border-navy-700/70 px-5 py-3 sm:px-8 lg:px-8">
-            <label htmlFor="search-brief" className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">The brief</label>
-            <div className="mt-2 grid gap-3 lg:grid-cols-[1fr_auto_auto] lg:items-end">
+          {manualMode ? (
+            <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-navy-700/70 px-5 py-3 sm:px-8 lg:px-8">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-400">Manual shortlist</p>
+                <p className="mt-1 text-xs text-cream-300">Click people in the long list to seat or remove them.</p>
+              </div>
+              <div className="flex items-end gap-3">
+                <label className="text-xs text-cream-300">
+                  Seats
+                  <select
+                    value={manualSeatCount}
+                    onChange={(event) => {
+                      const nextCount = Number(event.target.value);
+                      setManualSeatCount(nextCount);
+                      setManualSeated((current) => current.slice(0, nextCount));
+                    }}
+                    className="mt-1 block rounded-lg border border-navy-700 bg-navy-950 px-3 py-2 text-sm text-cream-50 outline-none focus:border-gold-500"
+                  >
+                    {[3, 4, 5, 6].map((count) => <option key={count} value={count}>{count}</option>)}
+                  </select>
+                </label>
+                <Link
+                  href={`/search?ll=${longListParam}`}
+                  className="rounded-full bg-gold-500 px-5 py-2.5 text-sm font-semibold text-navy-950 shadow-lg hover:bg-gold-400"
+                >
+                  Let the agent build your shortlist
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={runShortlist} className="shrink-0 border-b border-navy-700/70 px-5 py-3 sm:px-8 lg:px-8">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label htmlFor="search-brief" className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">The brief</label>
+              <button
+                type="submit"
+                disabled={loading || brief.trim().length === 0}
+                className="rounded-full bg-gold-500 px-5 py-2.5 text-sm font-semibold text-navy-950 shadow-lg hover:bg-gold-400 disabled:cursor-wait disabled:opacity-55"
+              >
+                {loading
+                  ? "Shortlisting…"
+                  : shortlist
+                    ? "Rebuild with the agent"
+                    : "Let the agent build your shortlist"}
+              </button>
+            </div>
+            <div className="mt-2 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-end">
               <textarea
                 id="search-brief"
                 required
@@ -349,35 +426,33 @@ function SearchInner() {
                     .map((count) => <option key={count} value={count}>{count}</option>)}
                 </select>
               </label>
-              <button
-                type="submit"
-                disabled={loading || brief.trim().length === 0}
-                className="rounded-lg bg-gold-500 px-5 py-2 text-sm font-semibold text-navy-950 hover:bg-gold-400 disabled:cursor-wait disabled:opacity-55"
-              >
-                {loading ? "Shortlisting…" : shortlist ? "Run again" : "Shortlist"}
-              </button>
             </div>
             {error && <p role="alert" className="mt-3 text-sm text-cream-100">{error}</p>}
-          </form>
+            </form>
+          )}
 
-          <div className="grid min-h-0 flex-1 gap-5 overflow-hidden px-5 py-3 sm:px-8 lg:grid-cols-[minmax(0,1fr)_220px] lg:px-8">
+          <div className={`grid min-h-0 flex-1 gap-5 overflow-hidden px-5 py-3 sm:px-8 lg:px-8 ${
+            manualMode ? "" : "lg:grid-cols-[minmax(0,1fr)_220px]"
+          }`}>
             <div className="flex min-h-0 min-w-0 flex-col items-center">
               <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">Shortlist</p>
               <div className="min-h-0 w-full max-w-[min(48dvh,520px)]">
                 <Room
                   members={seatedCandidates}
-                  emptySeatCount={seatCount - seatedCandidates.length}
-                  interactive
+                  emptySeatCount={(manualMode ? manualSeatCount : seatCount) - seatedCandidates.length}
+                  interactive={!manualMode}
                   dragPayload={dragPayload}
                   highlightIds={selectedId ? [selectedId] : []}
                   connections={roomConnections}
                   onDragStateChange={setDragPayload}
                   onSeatDrop={dropOnSeat}
                   onMoveMember={moveMember}
-                  onSeatClick={(memberId) => setSelectedId((current) => current === memberId ? undefined : memberId)}
+                  onSeatClick={manualMode
+                    ? (memberId) => setManualSeated((current) => current.filter((id) => id !== memberId))
+                    : (memberId) => setSelectedId((current) => current === memberId ? undefined : memberId)}
                 />
               </div>
-              {shortlist && (
+              {(manualMode || shortlist) && (
                 <div aria-label="Connection legend" className="mt-1 flex flex-wrap justify-center gap-x-4 gap-y-1 text-[9px] text-cream-300">
                   <span className="flex items-center gap-1.5">
                     <span className="h-0.5 w-5 bg-signal-tension" />
@@ -389,7 +464,7 @@ function SearchInner() {
                   </span>
                 </div>
               )}
-              {shortlist ? (
+              {manualMode || shortlist ? (
                 <section aria-labelledby="dynamics-heading" className="mt-2 grid w-full max-w-3xl gap-3 rounded-xl border border-navy-700 bg-navy-900/60 p-3 lg:grid-cols-[0.8fr_1.2fr]">
                   <div>
                     <h2 id="dynamics-heading" className="font-display text-lg text-cream-50">Team dynamics</h2>
@@ -417,14 +492,16 @@ function SearchInner() {
                       ))}
                     </div>
                     <div aria-live="polite" className="mt-3 border-t border-navy-700/70 pt-2 text-[10px] leading-4 text-cream-300">
-                      {selectedId && seatedIdSet.has(selectedId) ? (
+                      {!manualMode && selectedId && seatedIdSet.has(selectedId) ? (
                         <>
                           <span className="text-cream-50">{candidateById.get(selectedId)?.displayName}</span>
                           <span className="mx-1 text-gold-400">—</span>
                           {reasonsById.get(selectedId) ?? "Added by you during refinement."}
                         </>
                       ) : (
-                        "Click a seated finalist to see the agent’s reason."
+                        manualMode
+                          ? "Add people from the long list to see the room’s dynamics change."
+                          : "Click a seated finalist to see the agent’s reason."
                       )}
                     </div>
                   </div>
@@ -453,7 +530,8 @@ function SearchInner() {
               )}
             </div>
 
-            <aside className="min-h-0 min-w-0 overflow-hidden border-l border-navy-700/70 pl-5">
+            {!manualMode && (
+              <aside className="min-h-0 min-w-0 overflow-hidden border-l border-navy-700/70 pl-5">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">Runners-up</p>
               {runnersUp.length > 0 ? (
                 <ol className="mt-3 grid gap-2">
@@ -489,7 +567,8 @@ function SearchInner() {
               >
                 Drag a seated finalist here to return them to the pool.
               </div>
-            </aside>
+              </aside>
+            )}
           </div>
         </section>
       </div>
