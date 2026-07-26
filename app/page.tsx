@@ -33,7 +33,7 @@ export default function CoverPage() {
           </Link>
 
           <Link
-            href="/search/pool"
+            href="/search/start"
             className="group rounded-2xl border border-gold-500/70 bg-navy-900 p-7 transition hover:-translate-y-1 hover:border-gold-400 hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 motion-reduce:transform-none sm:p-9"
           >
             <span className="font-display text-3xl text-cream-50">Search</span>

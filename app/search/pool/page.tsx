@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
 import { AiSelectModal } from "@/components/ai-select-modal";
 import { LongListPanel } from "@/components/long-list-panel";
 import { PoolProfileModal } from "@/components/pool-profile-modal";
@@ -118,12 +119,13 @@ function FacetDropdown({
   );
 }
 
-export default function CandidatePoolPage() {
+function CandidatePoolInner() {
+  const searchParams = useSearchParams();
   const [filters, setFilters] = useState<PoolFilterState>(initialFilterState);
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [longListIds, setLongListIds] = useState<string[]>([]);
   const [longListOpen, setLongListOpen] = useState(false);
-  const [aiSelectOpen, setAiSelectOpen] = useState(false);
+  const [aiSelectOpen, setAiSelectOpen] = useState(() => searchParams.get("mode") === "agentic");
   const [modalIds, setModalIds] = useState<string[]>();
   const visibleCandidates = useMemo(
     () => filterPool(POOL, filters),
@@ -408,5 +410,13 @@ export default function CandidatePoolPage() {
         />
       )}
     </main>
+  );
+}
+
+export default function CandidatePoolPage() {
+  return (
+    <Suspense fallback={null}>
+      <CandidatePoolInner />
+    </Suspense>
   );
 }

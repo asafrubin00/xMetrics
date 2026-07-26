@@ -7,10 +7,10 @@ afterEach(() => {
 });
 
 describe("CoverPage", () => {
-  it("starts the search journey at the candidate pool", () => {
+  it("starts the search journey at the research-mode choice", () => {
     render(<CoverPage />);
 
-    expect(screen.getByRole("link", { name: /Search/ })).toHaveAttribute("href", "/search/pool");
+    expect(screen.getByRole("link", { name: /Search/ })).toHaveAttribute("href", "/search/start");
     expect(screen.getByText("Build your long list →")).toBeInTheDocument();
   });
 });

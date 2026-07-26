@@ -1,10 +1,15 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import CandidatePoolPage from "./page";
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(window.location.search),
+}));
 
 afterEach(() => {
   cleanup();
+  window.history.replaceState({}, "", "/search/pool");
 });
 
 describe("CandidatePoolPage", () => {
@@ -23,6 +28,21 @@ describe("CandidatePoolPage", () => {
   it("shows the pool count in the header", () => {
     render(<CandidatePoolPage />);
     expect(screen.getByTestId("pool-count")).toHaveTextContent("50");
+  });
+
+  it("opens the AI-select modal on mount in agentic mode", () => {
+    window.history.replaceState({}, "", "/search/pool?mode=agentic");
+
+    render(<CandidatePoolPage />);
+
+    expect(screen.getByRole("dialog", { name: "AI long-list builder" })).toBeInTheDocument();
+  });
+
+  it("keeps the modal closed and renders the grid in manual mode", () => {
+    render(<CandidatePoolPage />);
+
+    expect(screen.queryByRole("dialog", { name: "AI long-list builder" })).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("pool-candidate-card")).toHaveLength(50);
   });
 
   it("updates the cards and live count when a facet is selected", async () => {
