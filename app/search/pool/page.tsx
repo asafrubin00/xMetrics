@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { PoolProfileModal } from "@/components/pool-profile-modal";
 import { filterPool, type FacetSelection, type PoolFilterState } from "@/lib/pool-filter";
 import {
   COMPANY_TYPES,
@@ -40,15 +41,6 @@ function initialFilterState(): PoolFilterState {
     minAge: MIN_POOL_AGE,
     maxAge: MAX_POOL_AGE,
   };
-}
-
-function initials(displayName: string): string {
-  return displayName
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
 }
 
 function FacetDropdown({
@@ -126,11 +118,42 @@ function FacetDropdown({
 
 export default function CandidatePoolPage() {
   const [filters, setFilters] = useState<PoolFilterState>(initialFilterState);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [modalIds, setModalIds] = useState<string[]>();
   const visibleCandidates = useMemo(
     () => filterPool(POOL, filters),
     [filters],
   );
   const fullPoolVisible = visibleCandidates.length === POOL.length;
+  const comparedIdSet = new Set(compareIds);
+  const modalCandidates = modalIds
+    ?.map((candidateId) => POOL.find((candidate) => candidate.id === candidateId))
+    .filter((candidate) => candidate !== undefined) ?? [];
+
+  const toggleCompare = (candidateId: string) => {
+    setCompareIds((current) => {
+      if (current.includes(candidateId)) {
+        return current.filter((id) => id !== candidateId);
+      }
+      return current.length < 4 ? [...current, candidateId] : current;
+    });
+  };
+
+  const removeFromModal = (candidateId: string) => {
+    setCompareIds((current) => current.filter((id) => id !== candidateId));
+    setModalIds((current) => {
+      const next = current?.filter((id) => id !== candidateId) ?? [];
+      return next.length > 0 ? next : undefined;
+    });
+  };
+
+  const addToModal = (candidateId: string) => {
+    const current = modalIds ?? [];
+    if (current.length >= 4 || current.includes(candidateId)) return;
+    const next = [...current, candidateId];
+    setModalIds(next);
+    setCompareIds(next);
+  };
 
   return (
     <main className="mx-auto flex h-dvh w-full max-w-[1680px] flex-col overflow-hidden">
@@ -228,22 +251,39 @@ export default function CandidatePoolPage() {
               <article
                 data-testid="pool-candidate-card"
                 key={candidate.id}
-                className="flex min-h-[88px] min-w-0 items-center gap-3 rounded-xl border border-navy-700 bg-navy-900 px-4 py-3 transition hover:-translate-y-0.5 hover:border-gold-500/70 motion-reduce:transform-none"
+                className={`relative flex min-h-[88px] min-w-0 rounded-xl border bg-navy-900 transition hover:-translate-y-0.5 hover:border-gold-500/70 motion-reduce:transform-none ${
+                  comparedIdSet.has(candidate.id)
+                    ? "border-gold-500 shadow-[0_0_14px_rgba(201,162,39,0.16)]"
+                    : "border-navy-700"
+                }`}
               >
-                <div
-                  aria-hidden="true"
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-[1.5px] border-gold-500 bg-navy-900 font-display text-base text-cream-50"
+                <button
+                  type="button"
+                  aria-label={`Open profile for ${candidate.displayName}`}
+                  onClick={() => setModalIds([candidate.id])}
+                  className="flex min-w-0 flex-1 flex-col items-center justify-center px-3 py-3 text-center"
                 >
-                  {initials(candidate.displayName)}
-                </div>
-                <div className="min-w-0">
-                  <h2 className="truncate font-display text-base leading-5 text-cream-50" title={candidate.displayName}>
+                  <h2 className="break-words font-display text-[15px] leading-tight text-cream-50">
                     {candidate.displayName}
                   </h2>
-                  <p className="mt-1 truncate text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-gold-400" title={candidate.role}>
+                  <p className="mt-1.5 break-words text-[8px] font-semibold uppercase leading-3 tracking-[0.1em] text-gold-400">
                     {candidate.role}
                   </p>
-                </div>
+                </button>
+                <button
+                  type="button"
+                  aria-label={`${comparedIdSet.has(candidate.id) ? "Remove" : "Add"} ${candidate.displayName} ${comparedIdSet.has(candidate.id) ? "from" : "to"} compare`}
+                  aria-pressed={comparedIdSet.has(candidate.id)}
+                  disabled={compareIds.length >= 4 && !comparedIdSet.has(candidate.id)}
+                  onClick={() => toggleCompare(candidate.id)}
+                  className={`absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border text-xs transition ${
+                    comparedIdSet.has(candidate.id)
+                      ? "border-gold-400 bg-gold-500 text-navy-950"
+                      : "border-navy-700 bg-navy-950 text-cream-300 hover:border-gold-500 hover:text-cream-50 disabled:cursor-not-allowed disabled:opacity-25"
+                  }`}
+                >
+                  {comparedIdSet.has(candidate.id) ? "✓" : "＋"}
+                </button>
               </article>
             ))}
           </div>
@@ -258,6 +298,26 @@ export default function CandidatePoolPage() {
           </div>
         )}
       </section>
+
+      {compareIds.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setModalIds([...compareIds])}
+          className="fixed bottom-5 right-5 z-30 rounded-full bg-gold-500 px-5 py-3 text-sm font-semibold text-navy-950 shadow-2xl hover:bg-gold-400"
+        >
+          Compare ({compareIds.length})
+        </button>
+      )}
+
+      {modalCandidates.length > 0 && (
+        <PoolProfileModal
+          candidates={modalCandidates}
+          pool={POOL}
+          onAdd={addToModal}
+          onRemove={removeFromModal}
+          onClose={() => setModalIds(undefined)}
+        />
+      )}
     </main>
   );
 }
