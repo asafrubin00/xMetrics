@@ -208,4 +208,21 @@ describe("CandidatePoolPage", () => {
       "/search?ll=maya-chen,elena-rossi,priya-nair",
     );
   });
+
+  it("runs the AI selection simulation and adds its picks to the long list", async () => {
+    const user = userEvent.setup();
+    render(<CandidatePoolPage />);
+
+    await user.click(screen.getByRole("button", { name: "✦ Let AI build your long list" }));
+    const dialog = screen.getByRole("dialog", { name: "AI long-list builder" });
+    await user.type(within(dialog).getByLabelText("The brief"), "APAC audit chair regulatory governance");
+    await user.click(within(dialog).getByRole("button", { name: "Go" }));
+
+    expect(await within(dialog).findByTestId("ai-considered-line")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Skip" }));
+    await user.click(within(dialog).getByRole("button", { name: "Add to my long list" }));
+
+    expect(screen.queryByRole("dialog", { name: "AI long-list builder" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /View current long list \([1-9][0-9]?\)/ })).toBeInTheDocument();
+  });
 });

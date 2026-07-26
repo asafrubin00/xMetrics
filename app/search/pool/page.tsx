@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { AiSelectModal } from "@/components/ai-select-modal";
 import { LongListPanel } from "@/components/long-list-panel";
 import { PoolProfileModal } from "@/components/pool-profile-modal";
 import { filterPool, type FacetSelection, type PoolFilterState } from "@/lib/pool-filter";
@@ -122,6 +123,7 @@ export default function CandidatePoolPage() {
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const [longListIds, setLongListIds] = useState<string[]>([]);
   const [longListOpen, setLongListOpen] = useState(false);
+  const [aiSelectOpen, setAiSelectOpen] = useState(false);
   const [modalIds, setModalIds] = useState<string[]>();
   const visibleCandidates = useMemo(
     () => filterPool(POOL, filters),
@@ -185,6 +187,13 @@ export default function CandidatePoolPage() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setAiSelectOpen(true)}
+              className="rounded-full bg-gold-500 px-4 py-2 text-xs font-semibold text-navy-950 hover:bg-gold-400"
+            >
+              ✦ Let AI build your long list
+            </button>
             {longListIds.length > 0 && (
               <button
                 type="button"
@@ -381,6 +390,21 @@ export default function CandidatePoolPage() {
           onAdd={addToModal}
           onRemove={removeFromModal}
           onClose={() => setModalIds(undefined)}
+        />
+      )}
+
+      {aiSelectOpen && (
+        <AiSelectModal
+          longListIds={longListIds}
+          onAddPicks={(candidateIds) => setLongListIds((current) => {
+            const merged = [...current];
+            for (const candidateId of candidateIds) {
+              if (merged.length >= 20) break;
+              if (!merged.includes(candidateId)) merged.push(candidateId);
+            }
+            return merged;
+          })}
+          onClose={() => setAiSelectOpen(false)}
         />
       )}
     </main>
