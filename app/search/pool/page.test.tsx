@@ -8,6 +8,13 @@ afterEach(() => {
 });
 
 describe("CandidatePoolPage", () => {
+  function cardFor(name: string) {
+    const openProfile = screen.getByRole("button", { name: `Open profile for ${name}` });
+    const card = openProfile.closest("article");
+    if (!card) throw new Error(`Card not found for ${name}`);
+    return within(card);
+  }
+
   it("renders all 50 candidate cards", () => {
     render(<CandidatePoolPage />);
     expect(screen.getAllByTestId("pool-candidate-card")).toHaveLength(50);
@@ -44,8 +51,8 @@ describe("CandidatePoolPage", () => {
     const user = userEvent.setup();
     render(<CandidatePoolPage />);
 
-    await user.click(screen.getByRole("button", { name: "Add Maya Chen to compare" }));
-    await user.click(screen.getByRole("button", { name: "Add Elena Rossi to compare" }));
+    await user.click(cardFor("Maya Chen").getByRole("button", { name: "Compare" }));
+    await user.click(cardFor("Elena Rossi").getByRole("button", { name: "Compare" }));
     await user.click(screen.getByRole("button", { name: "Compare (2)" }));
 
     expect(screen.getAllByTestId("profile-panel")).toHaveLength(2);
@@ -55,8 +62,8 @@ describe("CandidatePoolPage", () => {
     const user = userEvent.setup();
     render(<CandidatePoolPage />);
 
-    await user.click(screen.getByRole("button", { name: "Add Maya Chen to compare" }));
-    await user.click(screen.getByRole("button", { name: "Add Elena Rossi to compare" }));
+    await user.click(cardFor("Maya Chen").getByRole("button", { name: "Compare" }));
+    await user.click(cardFor("Elena Rossi").getByRole("button", { name: "Compare" }));
     await user.click(screen.getByRole("button", { name: "Compare (2)" }));
     await user.click(screen.getByRole("button", { name: "Remove Maya Chen from comparison" }));
 
@@ -68,12 +75,73 @@ describe("CandidatePoolPage", () => {
     const user = userEvent.setup();
     render(<CandidatePoolPage />);
 
-    await user.click(screen.getByRole("button", { name: "Add Maya Chen to compare" }));
-    await user.click(screen.getByRole("button", { name: "Add Elena Rossi to compare" }));
-    await user.click(screen.getByRole("button", { name: "Add Priya Nair to compare" }));
-    await user.click(screen.getByRole("button", { name: "Add Tom Bennett to compare" }));
+    await user.click(cardFor("Maya Chen").getByRole("button", { name: "Compare" }));
+    await user.click(cardFor("Elena Rossi").getByRole("button", { name: "Compare" }));
+    await user.click(cardFor("Priya Nair").getByRole("button", { name: "Compare" }));
+    await user.click(cardFor("Tom Bennett").getByRole("button", { name: "Compare" }));
 
-    expect(screen.getByRole("button", { name: "Add Amina Yusuf to compare" })).toBeDisabled();
+    expect(cardFor("Amina Yusuf").getByRole("button", { name: "Compare" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Compare (4)" })).toBeInTheDocument();
+  });
+
+  it("adds a candidate to the long list and shows its selected state", async () => {
+    const user = userEvent.setup();
+    render(<CandidatePoolPage />);
+
+    const mayaCard = cardFor("Maya Chen");
+    const addButton = mayaCard.getByRole("button", { name: "Add to long list" });
+    await user.click(addButton);
+
+    expect(screen.getByRole("button", { name: "View current long list (1)" })).toBeInTheDocument();
+    expect(addButton).toHaveAttribute("aria-pressed", "true");
+    expect(addButton).toHaveTextContent("✓");
+    expect(addButton.closest("article")).toHaveClass("border-gold-500");
+  });
+
+  it("lists an added candidate in the panel and removes them", async () => {
+    const user = userEvent.setup();
+    render(<CandidatePoolPage />);
+
+    await user.click(cardFor("Maya Chen").getByRole("button", { name: "Add to long list" }));
+    await user.click(screen.getByRole("button", { name: "View current long list (1)" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Current long list" });
+    expect(within(dialog).getByRole("button", { name: "Open profile for Maya Chen" })).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Remove Maya Chen from long list" }));
+
+    expect(within(dialog).getByText("No candidates yet — add people with ＋")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "View current long list (1)" })).not.toBeInTheDocument();
+  });
+
+  it("keeps compare and long-list selection independent", async () => {
+    const user = userEvent.setup();
+    render(<CandidatePoolPage />);
+
+    const mayaCard = cardFor("Maya Chen");
+    const compareButton = mayaCard.getByRole("button", { name: "Compare" });
+    const longListButton = mayaCard.getByRole("button", { name: "Add to long list" });
+    await user.click(compareButton);
+
+    expect(compareButton).toHaveAttribute("aria-pressed", "true");
+    expect(longListButton).toHaveAttribute("aria-pressed", "false");
+    expect(screen.queryByRole("button", { name: /View current long list/ })).not.toBeInTheDocument();
+
+    await user.click(longListButton);
+    expect(compareButton).toHaveAttribute("aria-pressed", "true");
+    expect(longListButton).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Compare (1)" })).toBeInTheDocument();
+  });
+
+  it("caps the long list at twenty candidates", async () => {
+    const user = userEvent.setup();
+    render(<CandidatePoolPage />);
+    const cards = screen.getAllByTestId("pool-candidate-card");
+
+    for (const card of cards.slice(0, 20)) {
+      await user.click(within(card).getByRole("button", { name: "Add to long list" }));
+    }
+
+    expect(screen.getByRole("button", { name: "View current long list (20)" })).toBeInTheDocument();
+    expect(within(cards[20]).getByRole("button", { name: "Add to long list" })).toBeDisabled();
   });
 });

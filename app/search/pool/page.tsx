@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { LongListPanel } from "@/components/long-list-panel";
 import { PoolProfileModal } from "@/components/pool-profile-modal";
 import { filterPool, type FacetSelection, type PoolFilterState } from "@/lib/pool-filter";
 import {
@@ -119,6 +120,8 @@ function FacetDropdown({
 export default function CandidatePoolPage() {
   const [filters, setFilters] = useState<PoolFilterState>(initialFilterState);
   const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [longListIds, setLongListIds] = useState<string[]>([]);
+  const [longListOpen, setLongListOpen] = useState(false);
   const [modalIds, setModalIds] = useState<string[]>();
   const visibleCandidates = useMemo(
     () => filterPool(POOL, filters),
@@ -126,6 +129,10 @@ export default function CandidatePoolPage() {
   );
   const fullPoolVisible = visibleCandidates.length === POOL.length;
   const comparedIdSet = new Set(compareIds);
+  const longListIdSet = new Set(longListIds);
+  const longListCandidates = longListIds
+    .map((candidateId) => POOL.find((candidate) => candidate.id === candidateId))
+    .filter((candidate) => candidate !== undefined);
   const modalCandidates = modalIds
     ?.map((candidateId) => POOL.find((candidate) => candidate.id === candidateId))
     .filter((candidate) => candidate !== undefined) ?? [];
@@ -136,6 +143,15 @@ export default function CandidatePoolPage() {
         return current.filter((id) => id !== candidateId);
       }
       return current.length < 4 ? [...current, candidateId] : current;
+    });
+  };
+
+  const toggleLongList = (candidateId: string) => {
+    setLongListIds((current) => {
+      if (current.includes(candidateId)) {
+        return current.filter((id) => id !== candidateId);
+      }
+      return current.length < 20 ? [...current, candidateId] : current;
     });
   };
 
@@ -168,9 +184,20 @@ export default function CandidatePoolPage() {
               </span>
             </div>
           </div>
-          <Link href="/" className="shrink-0 text-xs text-cream-300 hover:text-cream-50">
-            Back to xMetrics
-          </Link>
+          <div className="flex shrink-0 items-center gap-3">
+            {longListIds.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setLongListOpen(true)}
+                className="rounded-full border border-gold-500/50 px-3 py-2 text-xs text-cream-100 hover:border-gold-400"
+              >
+                View current long list ({longListIds.length})
+              </button>
+            )}
+            <Link href="/" className="text-xs text-cream-300 hover:text-cream-50">
+              Back to xMetrics
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -252,7 +279,7 @@ export default function CandidatePoolPage() {
                 data-testid="pool-candidate-card"
                 key={candidate.id}
                 className={`relative flex min-h-[88px] min-w-0 rounded-xl border bg-navy-900 transition hover:-translate-y-0.5 hover:border-gold-500/70 motion-reduce:transform-none ${
-                  comparedIdSet.has(candidate.id)
+                  longListIdSet.has(candidate.id)
                     ? "border-gold-500 shadow-[0_0_14px_rgba(201,162,39,0.16)]"
                     : "border-navy-700"
                 }`}
@@ -272,17 +299,33 @@ export default function CandidatePoolPage() {
                 </button>
                 <button
                   type="button"
-                  aria-label={`${comparedIdSet.has(candidate.id) ? "Remove" : "Add"} ${candidate.displayName} ${comparedIdSet.has(candidate.id) ? "from" : "to"} compare`}
+                  aria-label="Compare"
+                  title="Compare"
                   aria-pressed={comparedIdSet.has(candidate.id)}
                   disabled={compareIds.length >= 4 && !comparedIdSet.has(candidate.id)}
                   onClick={() => toggleCompare(candidate.id)}
-                  className={`absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border text-xs transition ${
+                  className={`absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border text-xs transition ${
                     comparedIdSet.has(candidate.id)
                       ? "border-gold-400 bg-gold-500 text-navy-950"
                       : "border-navy-700 bg-navy-950 text-cream-300 hover:border-gold-500 hover:text-cream-50 disabled:cursor-not-allowed disabled:opacity-25"
                   }`}
                 >
-                  {comparedIdSet.has(candidate.id) ? "✓" : "＋"}
+                  ~
+                </button>
+                <button
+                  type="button"
+                  aria-label="Add to long list"
+                  title="Add to long list"
+                  aria-pressed={longListIdSet.has(candidate.id)}
+                  disabled={longListIds.length >= 20 && !longListIdSet.has(candidate.id)}
+                  onClick={() => toggleLongList(candidate.id)}
+                  className={`absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border text-xs transition ${
+                    longListIdSet.has(candidate.id)
+                      ? "border-gold-400 bg-gold-500 text-navy-950"
+                      : "border-navy-700 bg-navy-950 text-cream-300 hover:border-gold-500 hover:text-cream-50 disabled:cursor-not-allowed disabled:opacity-25"
+                  }`}
+                >
+                  {longListIdSet.has(candidate.id) ? "✓" : "+"}
                 </button>
               </article>
             ))}
@@ -307,6 +350,15 @@ export default function CandidatePoolPage() {
         >
           Compare ({compareIds.length})
         </button>
+      )}
+
+      {longListOpen && (
+        <LongListPanel
+          candidates={longListCandidates}
+          onRemove={(candidateId) => setLongListIds((current) => current.filter((id) => id !== candidateId))}
+          onOpenProfile={(candidateId) => setModalIds([candidateId])}
+          onClose={() => setLongListOpen(false)}
+        />
       )}
 
       {modalCandidates.length > 0 && (
