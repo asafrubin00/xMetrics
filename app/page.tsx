@@ -33,14 +33,14 @@ export default function CoverPage() {
           </Link>
 
           <Link
-            href="/search"
+            href="/search/pool"
             className="group rounded-2xl border border-gold-500/70 bg-navy-900 p-7 transition hover:-translate-y-1 hover:border-gold-400 hover:bg-navy-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-500 motion-reduce:transform-none sm:p-9"
           >
             <span className="font-display text-3xl text-cream-50">Search</span>
             <span className="mt-3 block max-w-sm text-sm leading-6 text-cream-300">
-              Brief an agent, get a shortlist, refine the room.
+              Search the pool, build a long list, shortlist with an agent.
             </span>
-            <span className="mt-8 block text-xs font-semibold uppercase tracking-[0.2em] text-gold-400">Try shortlisting →</span>
+            <span className="mt-8 block text-xs font-semibold uppercase tracking-[0.2em] text-gold-400">Build your long list →</span>
           </Link>
         </div>
       </div>

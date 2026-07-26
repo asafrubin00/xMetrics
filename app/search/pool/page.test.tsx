@@ -182,4 +182,30 @@ describe("CandidatePoolPage", () => {
     expect(screen.getByRole("button", { name: "Compare (1)" })).toBeInTheDocument();
     expect(screen.getByRole("dialog", { name: "Current long list" })).toBeInTheDocument();
   });
+
+  it("disables shortlist hand-off until three candidates are selected", async () => {
+    const user = userEvent.setup();
+    render(<CandidatePoolPage />);
+
+    await user.click(cardFor("Maya Chen").getByRole("button", { name: "Add to long list" }));
+    await user.click(screen.getByRole("button", { name: "View current long list (1)" }));
+
+    expect(screen.getByRole("button", { name: "Build shortlist →" })).toBeDisabled();
+    expect(screen.getByTitle("Add at least 3 to shortlist")).toBeInTheDocument();
+  });
+
+  it("links a three-person long list to the shortlist screen", async () => {
+    const user = userEvent.setup();
+    render(<CandidatePoolPage />);
+
+    await user.click(cardFor("Maya Chen").getByRole("button", { name: "Add to long list" }));
+    await user.click(cardFor("Elena Rossi").getByRole("button", { name: "Add to long list" }));
+    await user.click(cardFor("Priya Nair").getByRole("button", { name: "Add to long list" }));
+    await user.click(screen.getByRole("button", { name: "View current long list (3)" }));
+
+    expect(screen.getByRole("link", { name: "Build shortlist →" })).toHaveAttribute(
+      "href",
+      "/search?ll=maya-chen,elena-rossi,priya-nair",
+    );
+  });
 });

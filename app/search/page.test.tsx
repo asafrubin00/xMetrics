@@ -3,17 +3,35 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import SearchPage from "./page";
 
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(window.location.search),
+}));
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  window.history.replaceState({}, "", "/search");
 });
 
 describe("SearchPage", () => {
-  it("renders the candidate pool and empty finalist room", () => {
+  it("falls back to an 18-person long list and empty shortlist", () => {
     render(<SearchPage />);
-    expect(screen.getByText("Candidate pool")).toBeInTheDocument();
+    expect(screen.getByText("Long list")).toBeInTheDocument();
     expect(screen.getByText("Maya Chen")).toBeInTheDocument();
+    expect(screen.getAllByLabelText(/^Candidate /)).toHaveLength(18);
     expect(screen.getAllByLabelText("Empty seat")).toHaveLength(5);
+  });
+
+  it("renders only the candidates supplied in the long-list parameter", () => {
+    window.history.replaceState({}, "", "/search?ll=alice-morgan,benoit-laurent");
+
+    render(<SearchPage />);
+
+    expect(screen.getByText("Long list")).toBeInTheDocument();
+    expect(screen.getAllByLabelText(/^Candidate /)).toHaveLength(2);
+    expect(screen.getByLabelText("Candidate Alice Morgan")).toBeInTheDocument();
+    expect(screen.getByLabelText("Candidate Benoit Laurent")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Candidate Maya Chen")).not.toBeInTheDocument();
   });
 
   it("submits the brief and seats the returned finalists", async () => {

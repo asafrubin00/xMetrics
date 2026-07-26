@@ -270,6 +270,7 @@ export default function CandidatePoolPage() {
         {longListOpen && (
           <LongListPanel
             candidates={longListCandidates}
+            longListIds={longListIds}
             onRemove={(candidateId) => setLongListIds((current) => current.filter((id) => id !== candidateId))}
             onOpenProfile={(candidateId) => setModalIds([candidateId])}
             onClose={() => setLongListOpen(false)}

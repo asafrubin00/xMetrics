@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type DragEvent, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState, type DragEvent, type FormEvent } from "react";
 import { Room, type RoomConnection } from "@/components/room";
-import { CANDIDATES, type Candidate } from "@/lib/candidates.config";
+import { resolveLongList } from "@/lib/long-list";
+import { POOL, type PoolCandidate } from "@/lib/pool.config";
 import { computeSignals } from "@/lib/signals";
 import type { Shortlist } from "@/lib/shortlist";
 import { TRAITS } from "@/lib/traits.config";
@@ -12,7 +14,7 @@ import type { DerivedSignal } from "@/lib/types";
 const DEFAULT_BRIEF = "I need a chair for a mid-cap fintech board — strong on regulatory, calm under pressure, not another dominant voice";
 const GROUPS = ["drive", "thinking", "interpersonal", "pressure"] as const;
 
-function groupSummary(candidate: Candidate, group: (typeof GROUPS)[number]): string {
+function groupSummary(candidate: PoolCandidate, group: (typeof GROUPS)[number]): string {
   const groupTraits = TRAITS.filter((trait) => trait.group === group);
   const mostDistinctive = groupTraits
     .map((trait) => ({
@@ -25,7 +27,7 @@ function groupSummary(candidate: Candidate, group: (typeof GROUPS)[number]): str
 
 function connectionsForSignals(
   signals: DerivedSignal[],
-  candidates: Candidate[],
+  candidates: PoolCandidate[],
 ): RoomConnection[] {
   const candidateById = new Map(candidates.map((candidate) => [candidate.id, candidate]));
   const weighted: { connection: RoomConnection; priority: number; strength: number }[] = [];
@@ -51,7 +53,7 @@ function connectionsForSignals(
 
     const members = signal.memberIds
       .map((id) => candidateById.get(id))
-      .filter((candidate): candidate is Candidate => Boolean(candidate));
+      .filter((candidate): candidate is PoolCandidate => Boolean(candidate));
     const scores = members.map((member) => member.traits[signal.traitId]);
     const midpoint = (Math.min(...scores) + Math.max(...scores)) / 2;
     const highCamp = members.filter((member) => member.traits[signal.traitId] >= midpoint);
@@ -82,9 +84,17 @@ function signalLabel(kind: DerivedSignal["kind"]): string {
   return "Overlap";
 }
 
-export default function SearchPage() {
+function SearchInner() {
+  const searchParams = useSearchParams();
+  const candidates = useMemo(() => {
+    const longListParam = searchParams.get("ll");
+    if (!longListParam) return POOL.slice(0, 18);
+    const resolved = resolveLongList(longListParam.split(","));
+    return resolved.length > 0 ? resolved : POOL.slice(0, 18);
+  }, [searchParams]);
+  const maxFinalists = Math.max(3, Math.min(6, candidates.length));
   const [brief, setBrief] = useState(DEFAULT_BRIEF);
-  const [seatCount, setSeatCount] = useState(5);
+  const [seatCount, setSeatCount] = useState(() => Math.min(5, maxFinalists));
   const [shortlist, setShortlist] = useState<Shortlist>();
   const [seatedIds, setSeatedIds] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string>();
@@ -95,13 +105,13 @@ export default function SearchPage() {
   const [error, setError] = useState<string>();
 
   const candidateById = useMemo(
-    () => new Map(CANDIDATES.map((candidate) => [candidate.id, candidate])),
-    [],
+    () => new Map(candidates.map((candidate) => [candidate.id, candidate])),
+    [candidates],
   );
   const seatedCandidates = useMemo(
     () => seatedIds
       .map((candidateId) => candidateById.get(candidateId))
-      .filter((candidate): candidate is Candidate => Boolean(candidate)),
+      .filter((candidate): candidate is PoolCandidate => Boolean(candidate)),
     [candidateById, seatedIds],
   );
   const teamSignals = useMemo(
@@ -142,7 +152,7 @@ export default function SearchPage() {
   const runnersUp = shortlist?.ranked
     .filter((ranked) => !seatedIdSet.has(ranked.candidateId))
     .map((ranked) => ({ ...ranked, candidate: candidateById.get(ranked.candidateId) }))
-    .filter((ranked): ranked is typeof ranked & { candidate: Candidate } => Boolean(ranked.candidate))
+    .filter((ranked): ranked is typeof ranked & { candidate: PoolCandidate } => Boolean(ranked.candidate))
     .slice(0, 5) ?? [];
 
   const runShortlist = async (event: FormEvent) => {
@@ -154,7 +164,7 @@ export default function SearchPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          candidates: CANDIDATES,
+          candidates,
           brief: brief.trim(),
           seatCount,
           traitDefinitions: TRAITS,
@@ -246,14 +256,14 @@ export default function SearchPage() {
         <section className="flex min-h-0 min-w-0 flex-col border-b border-navy-700/70 px-5 py-4 sm:px-8 lg:border-b-0 lg:border-r lg:px-6">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">Candidate pool</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-400">Long list</p>
               <h2 className="mt-2 font-display text-2xl text-cream-50">Board and executive search</h2>
             </div>
-            <span className="shrink-0 text-sm text-cream-300">{CANDIDATES.length}</span>
+            <span className="shrink-0 text-sm text-cream-300">{candidates.length}</span>
           </div>
 
           <div className="mt-3 grid min-h-0 flex-1 content-start gap-2 overflow-y-auto pr-1">
-            {CANDIDATES.map((candidate) => {
+            {candidates.map((candidate) => {
               const rank = rankById.get(candidate.id);
               const picked = seatedIdSet.has(candidate.id);
               return (
@@ -334,7 +344,9 @@ export default function SearchPage() {
                   }}
                   className="mt-1 block w-full rounded-lg border border-navy-700 bg-navy-950 px-3 py-2 text-sm text-cream-50 outline-none focus:border-gold-500"
                 >
-                  {[3, 4, 5, 6].map((count) => <option key={count} value={count}>{count}</option>)}
+                  {[3, 4, 5, 6]
+                    .filter((count) => count <= maxFinalists)
+                    .map((count) => <option key={count} value={count}>{count}</option>)}
                 </select>
               </label>
               <button
@@ -350,7 +362,7 @@ export default function SearchPage() {
 
           <div className="grid min-h-0 flex-1 gap-5 overflow-hidden px-5 py-3 sm:px-8 lg:grid-cols-[minmax(0,1fr)_220px] lg:px-8">
             <div className="flex min-h-0 min-w-0 flex-col items-center">
-              <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">The finalist room</p>
+              <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-gold-400">Shortlist</p>
               <div className="min-h-0 w-full max-w-[min(48dvh,520px)]">
                 <Room
                   members={seatedCandidates}
@@ -486,5 +498,13 @@ export default function SearchPage() {
         xMetrics — prototype. Candidate profiles are illustrative, not validated assessments.
       </footer>
     </main>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={null}>
+      <SearchInner />
+    </Suspense>
   );
 }

@@ -1,14 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import type { PoolCandidate } from "@/lib/pool.config";
 
 export function LongListPanel({
   candidates,
+  longListIds,
   onClose,
   onOpenProfile,
   onRemove,
 }: {
   candidates: PoolCandidate[];
+  longListIds: string[];
   onClose: () => void;
   onOpenProfile: (candidateId: string) => void;
   onRemove: (candidateId: string) => void;
@@ -96,14 +99,23 @@ export function LongListPanel({
           >
             Save &amp; close
           </button>
-          <button
-            type="button"
-            disabled
-            title="Available in the next step"
-            className="cursor-not-allowed rounded-full bg-gold-500 px-4 py-2 text-xs font-semibold text-navy-950 opacity-45"
-          >
-            Build shortlist →
-          </button>
+          {longListIds.length >= 3 ? (
+            <Link
+              href={`/search?ll=${longListIds.join(",")}`}
+              className="rounded-full bg-gold-500 px-4 py-2 text-xs font-semibold text-navy-950 hover:bg-gold-400"
+            >
+              Build shortlist →
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              title="Add at least 3 to shortlist"
+              className="cursor-not-allowed rounded-full bg-gold-500 px-4 py-2 text-xs font-semibold text-navy-950 opacity-45"
+            >
+              Build shortlist →
+            </button>
+          )}
         </footer>
       </section>
     </div>
