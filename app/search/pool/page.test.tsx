@@ -144,4 +144,42 @@ describe("CandidatePoolPage", () => {
     expect(screen.getByRole("button", { name: "View current long list (20)" })).toBeInTheDocument();
     expect(within(cards[20]).getByRole("button", { name: "Add to long list" })).toBeDisabled();
   });
+
+  it("shows the long-list panel and pool cards together in split view", async () => {
+    const user = userEvent.setup();
+    render(<CandidatePoolPage />);
+
+    await user.click(cardFor("Maya Chen").getByRole("button", { name: "Add to long list" }));
+    await user.click(screen.getByRole("button", { name: "View current long list (1)" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Current long list" });
+    expect(within(dialog).getByRole("button", { name: "Open profile for Maya Chen" })).toBeInTheDocument();
+    expect(screen.getAllByTestId("pool-candidate-card")).toHaveLength(50);
+  });
+
+  it("returns to the full grid when the long-list panel closes", async () => {
+    const user = userEvent.setup();
+    render(<CandidatePoolPage />);
+
+    await user.click(cardFor("Maya Chen").getByRole("button", { name: "Add to long list" }));
+    await user.click(screen.getByRole("button", { name: "View current long list (1)" }));
+    await user.click(screen.getByRole("button", { name: "Close current long list" }));
+
+    expect(screen.queryByRole("dialog", { name: "Current long list" })).not.toBeInTheDocument();
+    expect(screen.getAllByTestId("pool-candidate-card")).toHaveLength(50);
+  });
+
+  it("keeps card actions working while the long-list panel is open", async () => {
+    const user = userEvent.setup();
+    render(<CandidatePoolPage />);
+
+    await user.click(cardFor("Maya Chen").getByRole("button", { name: "Add to long list" }));
+    await user.click(screen.getByRole("button", { name: "View current long list (1)" }));
+    const elenaCompareButton = cardFor("Elena Rossi").getByRole("button", { name: "Compare" });
+    await user.click(elenaCompareButton);
+
+    expect(elenaCompareButton).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Compare (1)" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Current long list" })).toBeInTheDocument();
+  });
 });

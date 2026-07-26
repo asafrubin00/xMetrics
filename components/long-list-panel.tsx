@@ -16,11 +16,10 @@ export function LongListPanel({
   return (
     <div
       role="dialog"
-      aria-modal="true"
       aria-label="Current long list"
-      className="fixed inset-0 z-40 flex h-dvh items-stretch justify-end overflow-hidden bg-navy-950/70 p-4 backdrop-blur-sm sm:p-6"
+      className="flex min-h-0 w-2/5 shrink-0 overflow-hidden"
     >
-      <section className="flex min-h-0 w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-gold-500/35 bg-navy-900 shadow-2xl">
+      <section className="flex min-h-0 w-full flex-col overflow-hidden rounded-2xl border border-gold-500/35 bg-navy-900">
         <header className="flex shrink-0 items-center justify-between gap-4 border-b border-navy-700 px-5 py-4 sm:px-6">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold-400">

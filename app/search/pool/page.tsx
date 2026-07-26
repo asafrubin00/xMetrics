@@ -264,83 +264,104 @@ export default function CandidatePoolPage() {
         </button>
       </section>
 
-      <section
-        aria-label="Candidates"
-        className="relative z-10 min-h-0 flex-1 overflow-y-auto px-5 pb-3 sm:px-8 lg:px-10"
-      >
-        {visibleCandidates.length > 0 ? (
-          <div className={`grid min-h-full grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-9 2xl:grid-cols-10 ${
-            fullPoolVisible
-              ? "grid-rows-[repeat(25,minmax(88px,1fr))] sm:grid-rows-[repeat(13,minmax(88px,1fr))] md:grid-rows-[repeat(9,minmax(88px,1fr))] lg:grid-rows-[repeat(7,minmax(88px,1fr))] xl:grid-rows-[repeat(6,minmax(88px,1fr))] 2xl:grid-rows-[repeat(5,minmax(88px,1fr))]"
-              : "auto-rows-[96px] content-start"
-          }`}>
-            {visibleCandidates.map((candidate) => (
-              <article
-                data-testid="pool-candidate-card"
-                key={candidate.id}
-                className={`relative flex min-h-[88px] min-w-0 rounded-xl border bg-navy-900 transition hover:-translate-y-0.5 hover:border-gold-500/70 motion-reduce:transform-none ${
-                  longListIdSet.has(candidate.id)
-                    ? "border-gold-500 shadow-[0_0_14px_rgba(201,162,39,0.16)]"
-                    : "border-navy-700"
-                }`}
-              >
-                <button
-                  type="button"
-                  aria-label={`Open profile for ${candidate.displayName}`}
-                  onClick={() => setModalIds([candidate.id])}
-                  className="flex min-w-0 flex-1 flex-col items-center justify-center px-3 py-3 text-center"
-                >
-                  <h2 className="break-words font-display text-[15px] leading-tight text-cream-50">
-                    {candidate.displayName}
-                  </h2>
-                  <p className="mt-1.5 break-words text-[8px] font-semibold uppercase leading-3 tracking-[0.1em] text-gold-400">
-                    {candidate.role}
-                  </p>
-                </button>
-                <button
-                  type="button"
-                  aria-label="Compare"
-                  title="Compare"
-                  aria-pressed={comparedIdSet.has(candidate.id)}
-                  disabled={compareIds.length >= 4 && !comparedIdSet.has(candidate.id)}
-                  onClick={() => toggleCompare(candidate.id)}
-                  className={`absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border text-xs transition ${
-                    comparedIdSet.has(candidate.id)
-                      ? "border-gold-400 bg-gold-500 text-navy-950"
-                      : "border-navy-700 bg-navy-950 text-cream-300 hover:border-gold-500 hover:text-cream-50 disabled:cursor-not-allowed disabled:opacity-25"
-                  }`}
-                >
-                  ~
-                </button>
-                <button
-                  type="button"
-                  aria-label="Add to long list"
-                  title="Add to long list"
-                  aria-pressed={longListIdSet.has(candidate.id)}
-                  disabled={longListIds.length >= 20 && !longListIdSet.has(candidate.id)}
-                  onClick={() => toggleLongList(candidate.id)}
-                  className={`absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border text-xs transition ${
-                    longListIdSet.has(candidate.id)
-                      ? "border-gold-400 bg-gold-500 text-navy-950"
-                      : "border-navy-700 bg-navy-950 text-cream-300 hover:border-gold-500 hover:text-cream-50 disabled:cursor-not-allowed disabled:opacity-25"
-                  }`}
-                >
-                  {longListIdSet.has(candidate.id) ? "✓" : "+"}
-                </button>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="flex h-full items-center justify-center text-center">
-            <div>
-              <p className="font-display text-2xl text-cream-50">No candidates match</p>
-              <button type="button" onClick={() => setFilters(initialFilterState())} className="mt-3 text-xs text-gold-400 hover:text-gold-500">
-                Clear all filters
-              </button>
-            </div>
-          </div>
+      <div className={`relative z-10 flex min-h-0 flex-1 ${
+        longListOpen ? "gap-3 px-5 pb-3 sm:px-8 lg:px-10" : ""
+      }`}>
+        {longListOpen && (
+          <LongListPanel
+            candidates={longListCandidates}
+            onRemove={(candidateId) => setLongListIds((current) => current.filter((id) => id !== candidateId))}
+            onOpenProfile={(candidateId) => setModalIds([candidateId])}
+            onClose={() => setLongListOpen(false)}
+          />
         )}
-      </section>
+
+        <section
+          aria-label="Candidates"
+          className={`min-h-0 overflow-y-auto ${
+            longListOpen
+              ? "min-w-0 flex-1"
+              : "w-full px-5 pb-3 sm:px-8 lg:px-10"
+          }`}
+        >
+          {visibleCandidates.length > 0 ? (
+            <div className={`grid min-h-full gap-2 ${
+              longListOpen
+                ? "auto-rows-[96px] grid-cols-1 content-start sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                : `grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-9 2xl:grid-cols-10 ${
+                  fullPoolVisible
+                    ? "grid-rows-[repeat(25,minmax(88px,1fr))] sm:grid-rows-[repeat(13,minmax(88px,1fr))] md:grid-rows-[repeat(9,minmax(88px,1fr))] lg:grid-rows-[repeat(7,minmax(88px,1fr))] xl:grid-rows-[repeat(6,minmax(88px,1fr))] 2xl:grid-rows-[repeat(5,minmax(88px,1fr))]"
+                    : "auto-rows-[96px] content-start"
+                }`
+            }`}>
+              {visibleCandidates.map((candidate) => (
+                <article
+                  data-testid="pool-candidate-card"
+                  key={candidate.id}
+                  className={`relative flex min-h-[88px] min-w-0 rounded-xl border bg-navy-900 transition hover:-translate-y-0.5 hover:border-gold-500/70 motion-reduce:transform-none ${
+                    longListIdSet.has(candidate.id)
+                      ? "border-gold-500 shadow-[0_0_14px_rgba(201,162,39,0.16)]"
+                      : "border-navy-700"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    aria-label={`Open profile for ${candidate.displayName}`}
+                    onClick={() => setModalIds([candidate.id])}
+                    className="flex min-w-0 flex-1 flex-col items-center justify-center px-3 py-3 text-center"
+                  >
+                    <h2 className="break-words font-display text-[15px] leading-tight text-cream-50">
+                      {candidate.displayName}
+                    </h2>
+                    <p className="mt-1.5 break-words text-[8px] font-semibold uppercase leading-3 tracking-[0.1em] text-gold-400">
+                      {candidate.role}
+                    </p>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Compare"
+                    title="Compare"
+                    aria-pressed={comparedIdSet.has(candidate.id)}
+                    disabled={compareIds.length >= 4 && !comparedIdSet.has(candidate.id)}
+                    onClick={() => toggleCompare(candidate.id)}
+                    className={`absolute right-8 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border text-xs transition ${
+                      comparedIdSet.has(candidate.id)
+                        ? "border-gold-400 bg-gold-500 text-navy-950"
+                        : "border-navy-700 bg-navy-950 text-cream-300 hover:border-gold-500 hover:text-cream-50 disabled:cursor-not-allowed disabled:opacity-25"
+                    }`}
+                  >
+                    ~
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Add to long list"
+                    title="Add to long list"
+                    aria-pressed={longListIdSet.has(candidate.id)}
+                    disabled={longListIds.length >= 20 && !longListIdSet.has(candidate.id)}
+                    onClick={() => toggleLongList(candidate.id)}
+                    className={`absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full border text-xs transition ${
+                      longListIdSet.has(candidate.id)
+                        ? "border-gold-400 bg-gold-500 text-navy-950"
+                        : "border-navy-700 bg-navy-950 text-cream-300 hover:border-gold-500 hover:text-cream-50 disabled:cursor-not-allowed disabled:opacity-25"
+                    }`}
+                  >
+                    {longListIdSet.has(candidate.id) ? "✓" : "+"}
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="flex h-full items-center justify-center text-center">
+              <div>
+                <p className="font-display text-2xl text-cream-50">No candidates match</p>
+                <button type="button" onClick={() => setFilters(initialFilterState())} className="mt-3 text-xs text-gold-400 hover:text-gold-500">
+                  Clear all filters
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
 
       {compareIds.length > 0 && (
         <button
@@ -350,15 +371,6 @@ export default function CandidatePoolPage() {
         >
           Compare ({compareIds.length})
         </button>
-      )}
-
-      {longListOpen && (
-        <LongListPanel
-          candidates={longListCandidates}
-          onRemove={(candidateId) => setLongListIds((current) => current.filter((id) => id !== candidateId))}
-          onOpenProfile={(candidateId) => setModalIds([candidateId])}
-          onClose={() => setLongListOpen(false)}
-        />
       )}
 
       {modalCandidates.length > 0 && (
