@@ -9,6 +9,40 @@ import {
 
 type ModalState = "brief" | "running" | "done";
 
+function SteerForm({
+  value,
+  onBlur,
+  onChange,
+  onFocus,
+  onSubmit,
+}: {
+  value: string;
+  onBlur: () => void;
+  onChange: (value: string) => void;
+  onFocus: () => void;
+  onSubmit: (event: FormEvent) => void;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="flex min-w-64 flex-1 gap-2">
+      <label className="min-w-0 flex-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-cream-300">
+        Steer the agent
+        <input
+          aria-label="Steer the agent"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onFocus={onFocus}
+          onBlur={onBlur}
+          placeholder="Focus on APAC"
+          className="mt-1 block w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs normal-case tracking-normal text-cream-50 outline-none placeholder:text-cream-300/45 focus:border-gold-500"
+        />
+      </label>
+      <button type="submit" className="rounded-lg border border-gold-500/50 px-4 py-2 text-xs text-cream-100 hover:border-gold-400">
+        Steer
+      </button>
+    </form>
+  );
+}
+
 export function AiSelectModal({
   longListIds,
   onAddPicks,
@@ -22,13 +56,16 @@ export function AiSelectModal({
   const [brief, setBrief] = useState("");
   const [constraints, setConstraints] = useState<string[]>([]);
   const [steer, setSteer] = useState("");
+  const [steerFocused, setSteerFocused] = useState(false);
   const [plan, setPlan] = useState<LongListPlan>();
   const [revealedCount, setRevealedCount] = useState(0);
   const [adjustments, setAdjustments] = useState<string[]>([]);
   const [history, setHistory] = useState<ConsideredCandidate[]>([]);
+  const steeringActive = steerFocused || steer.trim().length > 0;
 
   useEffect(() => {
     if (state !== "running" || !plan) return;
+    if (steeringActive) return;
     if (revealedCount >= plan.considered.length) {
       setState("done");
       return;
@@ -37,7 +74,7 @@ export function AiSelectModal({
       setRevealedCount((current) => current + 1);
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [plan, revealedCount, state]);
+  }, [plan, revealedCount, state, steeringActive]);
 
   const revealed = plan?.considered.slice(0, revealedCount) ?? [];
   const visibleConsidered = [...history, ...revealed];
@@ -73,6 +110,7 @@ export function AiSelectModal({
     setPlan(buildLongListPlan(brief, nextConstraints));
     setRevealedCount(0);
     setSteer("");
+    setSteerFocused(false);
     setState("running");
   };
 
@@ -159,21 +197,13 @@ export function AiSelectModal({
           </section>
 
           <div className="mt-3 flex shrink-0 flex-wrap items-end gap-3">
-            <form onSubmit={submitSteer} className="flex min-w-64 flex-1 gap-2">
-              <label className="min-w-0 flex-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-cream-300">
-                Steer the agent
-                <input
-                  aria-label="Steer the agent"
-                  value={steer}
-                  onChange={(event) => setSteer(event.target.value)}
-                  placeholder="Focus on APAC"
-                  className="mt-1 block w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs normal-case tracking-normal text-cream-50 outline-none placeholder:text-cream-300/45 focus:border-gold-500"
-                />
-              </label>
-              <button type="submit" className="rounded-lg border border-gold-500/50 px-4 py-2 text-xs text-cream-100 hover:border-gold-400">
-                Steer
-              </button>
-            </form>
+            <SteerForm
+              value={steer}
+              onChange={setSteer}
+              onFocus={() => setSteerFocused(true)}
+              onBlur={() => setSteerFocused(false)}
+              onSubmit={submitSteer}
+            />
             <button
               type="button"
               onClick={() => {
@@ -213,7 +243,14 @@ export function AiSelectModal({
               </p>
             )}
           </section>
-          <div className="mt-4 flex shrink-0 justify-end gap-3">
+          <div className="mt-4 flex shrink-0 flex-wrap items-end gap-3">
+            <SteerForm
+              value={steer}
+              onChange={setSteer}
+              onFocus={() => setSteerFocused(true)}
+              onBlur={() => setSteerFocused(false)}
+              onSubmit={submitSteer}
+            />
             <button
               type="button"
               onClick={() => {
